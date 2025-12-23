@@ -1,0 +1,41 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: hsl(var(--color-text-secondary));
+}
+
+.input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    background-color: hsl(var(--bg-input));
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: hsl(var(--color-text));
+    transition: all var(--transition-fast);
+}
+
+.input:focus {
+    background-color: hsl(var(--bg-input));
+    border-color: hsl(var(--color-primary));
+    box-shadow: 0 0 0 3px hsl(var(--color-primary-light));
+    outline: none;
+}
+
+.input.hasError {
+    border-color: hsl(var(--color-danger));
+}
+
+.errorText {
+    font-size: 0.75rem;
+    color: hsl(var(--color-danger));
+}

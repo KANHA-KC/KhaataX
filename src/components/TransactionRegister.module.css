@@ -1,0 +1,329 @@
+/* ... previous styles ... */
+
+.container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+    gap: var(--space-4);
+    position: relative;
+}
+
+.header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    background-color: transparent;
+}
+
+.titleRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.titleRow h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--color-text));
+    margin: 0;
+}
+
+.controls {
+    display: flex;
+    gap: var(--space-3);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.searchWrapper {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: hsl(var(--color-text-tertiary));
+    z-index: 10;
+}
+
+.searchInput {
+    padding-left: 36px !important;
+}
+
+.filterBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: hsl(var(--color-primary));
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    height: 16px;
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    margin-left: 4px;
+}
+
+/* New Active Filters Row */
+.activeFiltersRow {
+    display: flex;
+    flex-direction: row;
+    /* Explicitly row */
+    align-items: center;
+    flex-wrap: wrap;
+    /* Allow wrapping if too many, but keep row flow */
+    gap: var(--space-2);
+    padding: 0 4px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.activeFilterChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: hsl(var(--bg-surface));
+    border: 1px solid hsl(var(--border-color));
+    color: hsl(var(--color-text-secondary));
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.activeFilterChip:hover {
+    border-color: hsl(var(--color-primary) / 0.5);
+    color: hsl(var(--color-text));
+}
+
+.activeFilterChip svg {
+    cursor: pointer;
+    color: hsl(var(--color-text-tertiary));
+    transition: color 0.15s;
+}
+
+.activeFilterChip svg:hover {
+    color: hsl(var(--color-danger));
+}
+
+.clearFiltersBtn {
+    background: none;
+    border: none;
+    color: hsl(var(--color-text-tertiary));
+    font-size: 0.8rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.clearFiltersBtn:hover {
+    color: hsl(var(--color-danger));
+}
+
+/* Summary Card */
+.summaryCard {
+    display: grid;
+    grid-template-columns: 1fr 1px 1fr 1px 1fr;
+    background-color: hsl(var(--bg-surface));
+    border-radius: var(--radius-lg);
+    border: 1px solid hsl(var(--border-color));
+    padding: var(--space-4);
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.summaryItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.summaryLabel {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: hsl(var(--color-text-tertiary));
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.summaryValue {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-feature-settings: "tnum";
+}
+
+.summaryDivider {
+    width: 1px;
+    height: 70%;
+    background-color: hsl(var(--border-color));
+    justify-self: center;
+}
+
+.income {
+    color: hsl(var(--color-success));
+}
+
+.expense {
+    color: hsl(var(--color-danger));
+}
+
+/* Table Section */
+.tableWrapper {
+    flex: 1;
+    overflow: auto;
+    background-color: hsl(var(--bg-surface));
+    border: 1px solid hsl(var(--border-color));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.table {
+    width: 100%;
+    border-collapse: separate;
+    /* Changed from collapse for radius */
+    border-spacing: 0;
+}
+
+.table th {
+    background-color: hsl(var(--bg-surface));
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: left;
+    color: hsl(var(--color-text-secondary));
+    border-bottom: 1px solid hsl(var(--border-color));
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sortableHeader {
+    cursor: pointer;
+    transition: background-color 0.15s;
+    user-select: none;
+}
+
+.sortableHeader:hover {
+    background-color: hsl(var(--bg-hover));
+    color: hsl(var(--color-text));
+}
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.headerRight {
+    justify-content: flex-end;
+}
+
+.table td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid hsl(var(--border-color));
+    color: hsl(var(--color-text));
+    font-size: 0.9rem;
+    transition: background-color 0.15s;
+}
+
+.table tr:hover td {
+    background-color: hsl(var(--bg-hover));
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Column Specifics */
+.date {
+    font-variant-numeric: tabular-nums;
+    color: hsl(var(--color-text-secondary));
+    white-space: nowrap;
+}
+
+.payee {
+    font-weight: 500;
+    color: hsl(var(--color-text));
+    margin-bottom: 2px;
+}
+
+.notes {
+    font-size: 0.8rem;
+    color: hsl(var(--color-text-tertiary));
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: hsl(var(--bg-subtle));
+    color: hsl(var(--color-text-secondary));
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.account {
+    color: hsl(var(--color-text-secondary));
+    font-size: 0.85rem;
+}
+
+.amount {
+    font-weight: 600;
+    text-align: right;
+    font-feature-settings: "tnum";
+}
+
+.actionBtn {
+    background: transparent;
+    border: none;
+    color: hsl(var(--color-text-tertiary));
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.2s;
+}
+
+.table tr:hover .actionBtn {
+    opacity: 1;
+}
+
+.actionBtn:hover {
+    color: hsl(var(--color-danger));
+    background-color: hsl(var(--color-danger) / 0.1);
+}
+
+.empty {
+    text-align: center;
+    padding: var(--space-8);
+    color: hsl(var(--color-text-tertiary));
+    font-style: italic;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

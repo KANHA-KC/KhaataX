@@ -1,0 +1,104 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+}
+
+.card {
+    background: hsl(var(--bg-surface));
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid hsl(var(--border-color));
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: hsl(var(--color-primary) / 0.2);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: hsl(var(--bg-app));
+    color: hsl(var(--color-primary));
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: hsl(var(--color-text));
+}
+
+.balanceRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-2);
+    border-top: 1px solid hsl(var(--bg-app));
+}
+
+.label {
+    font-size: 0.9rem;
+    color: hsl(var(--color-text-secondary));
+}
+
+.amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: hsl(var(--color-text-secondary));
+    /* Default settled */
+}
+
+.green {
+    color: hsl(var(--color-success));
+}
+
+.red {
+    color: hsl(var(--color-danger));
+}
+
+.miniStats {
+    display: flex;
+    font-size: 0.75rem;
+    color: hsl(var(--color-text-tertiary));
+    gap: var(--space-2);
+    margin-top: auto;
+}
+
+.empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--space-8);
+    color: hsl(var(--color-text-secondary));
+}

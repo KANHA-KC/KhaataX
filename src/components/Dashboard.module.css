@@ -1,0 +1,215 @@
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    padding-bottom: var(--space-8);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: hsl(var(--color-text));
+}
+
+.subtitle {
+    color: hsl(var(--color-text-secondary));
+    font-size: 0.95rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-4);
+}
+
+.card {
+    background: hsl(var(--bg-surface));
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid hsl(var(--border-color));
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-4);
+}
+
+.cardLabel {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--color-text-tertiary));
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.iconBox {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: hsl(var(--bg-app));
+}
+
+.iconBox.danger {
+    background-color: hsl(var(--color-danger) / 0.1);
+    color: hsl(var(--color-danger));
+}
+
+.iconBox.success {
+    background-color: hsl(var(--color-success) / 0.1);
+    color: hsl(var(--color-success));
+}
+
+.iconBox.primary {
+    background-color: hsl(var(--color-primary) / 0.1);
+    color: hsl(var(--color-primary));
+}
+
+.cardValue {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: hsl(var(--color-text));
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transactionList {
+    background: hsl(var(--bg-surface));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    border: 1px solid hsl(var(--border-color));
+}
+
+.transactionRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-4);
+    border-bottom: 1px solid hsl(var(--bg-app));
+}
+
+.transactionRow:last-child {
+    border-bottom: none;
+}
+
+.txInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.txMain {
+    font-weight: 500;
+}
+
+.txSub {
+    font-size: 0.85rem;
+    color: hsl(var(--color-text-secondary));
+}
+
+.txAmount {
+    font-weight: 600;
+}
+
+.textSuccess {
+    color: hsl(var(--color-success));
+}
+
+.chartContainer {
+    background: hsl(var(--bg-surface));
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid hsl(var(--border-color));
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+/* AI Layout Split */
+.splitSection {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+}
+
+@media (max-width: 768px) {
+    .splitSection {
+        grid-template-columns: 1fr;
+    }
+}
+
+.insightPanel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    height: 100%;
+}
+
+.insightCard {
+    background: linear-gradient(135deg, hsl(var(--bg-surface)), hsl(var(--bg-app)));
+    border: 1px solid hsl(var(--border-color));
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: flex;
+    gap: var(--space-3);
+    align-items: flex-start;
+}
+
+.warning {
+    border-left: 4px solid hsl(var(--color-warning));
+}
+
+.success {
+    border-left: 4px solid hsl(var(--color-success));
+}
+
+.info {
+    border-left: 4px solid hsl(var(--color-primary));
+}
+
+.insightContent h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+    color: hsl(var(--color-text));
+}
+
+.insightContent p {
+    font-size: 0.85rem;
+    color: hsl(var(--color-text-secondary));
+    line-height: 1.4;
+}
+
+.robotIcon {
+    color: hsl(var(--color-primary));
+    min-width: 24px;
+}

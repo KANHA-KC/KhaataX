@@ -1,0 +1,217 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: 1200px;
+}
+
+.contentGrid {
+    display: flex;
+    flex-direction: row;
+    gap: var(--space-6);
+    align-items: flex-start;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    flex: 1;
+    min-width: 0;
+    /* Prevent flex items from overflowing */
+}
+
+@media (max-width: 900px) {
+    .contentGrid {
+        flex-direction: column;
+    }
+}
+
+.card {
+    background: hsl(var(--bg-surface));
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid hsl(var(--border-color));
+}
+
+.card h3 {
+    margin-bottom: var(--space-2);
+}
+
+.hint {
+    color: hsl(var(--color-text-secondary));
+    font-size: 0.9rem;
+    margin-bottom: var(--space-4);
+}
+
+.actions {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    /* Ensure normal actions wrap if needed */
+}
+
+.exportGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.exportGrid>button,
+.exportGrid>div>button {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+    /* Ensure visual consistency */
+}
+
+.connectedState {
+    background: hsl(var(--bg-app));
+    border: 1px solid hsl(var(--border-color));
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    margin-bottom: 0;
+}
+
+.accountInfo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: hsl(var(--color-text-primary));
+}
+
+.backupControls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.backupControls button {
+    width: 100%;
+}
+
+.select {
+    flex: 1;
+    background: hsl(var(--bg-input));
+    border: 1px solid hsl(var(--border-color));
+    color: hsl(var(--color-text-primary));
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    height: 36px;
+    cursor: pointer;
+}
+
+
+
+.importWrapper {
+    width: 100%;
+}
+
+.addCatForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    background: hsl(var(--bg-app));
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+}
+
+.catTypeToggle {
+    display: flex;
+    background: hsl(var(--bg-input));
+    padding: 2px;
+    border-radius: var(--radius-md);
+    width: fit-content;
+}
+
+.typeBtn {
+    border: none;
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    color: hsl(var(--color-text-secondary));
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.activeExpense {
+    background: hsl(var(--bg-surface));
+    color: hsl(var(--color-danger));
+    box-shadow: var(--shadow-sm);
+}
+
+.activeIncome {
+    background: hsl(var(--bg-surface));
+    color: hsl(var(--color-success));
+    box-shadow: var(--shadow-sm);
+}
+
+.addInputGroup {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.catInput {
+    flex: 1;
+}
+
+.catList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+}
+
+.catColumn h4 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: hsl(var(--color-text-tertiary));
+    margin-bottom: var(--space-3);
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.catTagWrapper {
+    display: inline-flex;
+    align-items: center;
+    background: hsl(var(--bg-app));
+    border-radius: var(--radius-full);
+    padding: 2px 2px 2px 10px;
+    border: 1px solid transparent;
+}
+
+.catTag {
+    font-size: 0.85rem;
+    color: hsl(var(--color-text-secondary));
+    margin-right: 4px;
+}
+
+.deleteCatBtn {
+    background: transparent;
+    border: none;
+    color: hsl(var(--color-text-tertiary));
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.deleteCatBtn:hover {
+    background: hsl(var(--bg-danger-subtle));
+    color: hsl(var(--color-danger));
+}
