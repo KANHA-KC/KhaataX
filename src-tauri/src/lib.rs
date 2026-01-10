@@ -7,11 +7,17 @@ const MASTER_SECRET: &str = "KhaataX-2026-SecretKey-Kanha-KC";
 #[tauri::command]
 fn get_system_id() -> Result<String, String> {
     machine_uid::get()
+        .map(|id| id.trim().to_string()) // Fix: Trim invisible whitespace (e.g. from Parallels/VMs)
         .map_err(|e| format!("Failed to get system ID: {}", e))
 }
 
 #[tauri::command]
 fn verify_license(system_id: String, license_key: String) -> bool {
+    // EMERGENCY BYPASS ID for Troubleshooting
+    if license_key == "KHAATAX-RESCUE-2026" {
+        return true;
+    }
+
     let expected_key = generate_license_key(&system_id);
     license_key.to_uppercase() == expected_key.to_uppercase()
 }
