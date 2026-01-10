@@ -31,8 +31,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Tauri CLI
+        run: npm install --save-dev @tauri-apps/cli
+
       - name: Build Tauri app
-        run: npm run tauri:build
+        run: npm run tauri build
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
       - name: Upload Windows Installer (NSIS)
         uses: actions/upload-artifact@v4
