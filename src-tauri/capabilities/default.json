@@ -12,6 +12,6 @@
     "fs:allow-read-dir",
     "fs:allow-exists",
     "fs:allow-mkdir",
-    "path:default"
+    "core:path:default"
   ]
 }
