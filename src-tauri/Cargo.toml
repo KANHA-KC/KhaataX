@@ -24,7 +24,6 @@ log = "0.4"
 tauri = { version = "2.9.5" }
 tauri-plugin-log = "2"
 tauri-plugin-fs = "2"
-tauri-plugin-path = "2"
 machine-uid = "0.5"
 sha2 = "0.10"
 hex = "0.4"

@@ -2,7 +2,7 @@ use sha2::{Sha256, Digest};
 use hex;
 
 // Secret Master Key - CHANGE THIS to your own secret!
-const MASTER_SECRET: &str = "KhaataX-2026-SecretKey-ChangeMe";
+const MASTER_SECRET: &str = "KhaataX-2026-SecretKey-Kanha-KC";
 
 #[tauri::command]
 fn get_system_id() -> Result<String, String> {
@@ -37,7 +37,6 @@ fn generate_license_key(system_id: &str) -> String {
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
-    .plugin(tauri_plugin_path::init())
     .invoke_handler(tauri::generate_handler![get_system_id, verify_license])
     .setup(|app| {
       if cfg!(debug_assertions) {
