@@ -215,3 +215,109 @@
     background: hsl(var(--bg-danger-subtle));
     color: hsl(var(--color-danger));
 }
+
+/* WhatsApp Style Backup */
+.waContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.waSection {
+    margin-bottom: 1rem;
+}
+
+.waLabel {
+    font-size: 0.9rem;
+    color: hsl(var(--color-text-secondary));
+    margin-bottom: 0.25rem;
+}
+
+.waValue {
+    font-size: 1rem;
+    font-weight: 500;
+    color: hsl(var(--color-text));
+}
+
+.waButton {
+    background-color: #25D366;
+    /* WhatsApp Green */
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    /* Pill shape */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.waButton:hover {
+    background-color: #128C7E;
+}
+
+.waButton:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.waAccountRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+    border-top: 1px solid hsl(var(--border-color));
+    border-bottom: 1px solid hsl(var(--border-color));
+    cursor: pointer;
+}
+
+.waIcon {
+    width: 24px;
+    height: 24px;
+    color: hsl(var(--color-text-secondary));
+}
+
+.freqSelect {
+    width: 100%;
+    padding: 1rem 0;
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    color: hsl(var(--color-text));
+    cursor: pointer;
+}
+
+.languageToggle {
+    display: flex;
+    background: hsl(var(--bg-input));
+    padding: 4px;
+    border-radius: var(--radius-md);
+    width: fit-content;
+    gap: 4px;
+    margin-top: 0.5rem;
+}
+
+.langBtn {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    color: hsl(var(--color-text-secondary));
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.activeLang {
+    background: hsl(var(--bg-surface));
+    color: hsl(var(--color-primary));
+    box-shadow: var(--shadow-sm);
+}

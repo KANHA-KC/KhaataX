@@ -10,6 +10,7 @@ import { Select } from './ui/Select';
 export const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
     const [name, setName] = useState('');
     const [currency, setCurrency] = useState('INR');
+    const [pin, setPin] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -18,6 +19,9 @@ export const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
         // Save to localStorage
         localStorage.setItem('ledger_user_name', name);
         localStorage.setItem('ledger_currency', currency);
+        if (pin.trim()) {
+            localStorage.setItem('ledger_app_pin', pin.trim());
+        }
         onComplete();
     };
 
@@ -31,7 +35,7 @@ export const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
             textAlign: 'center'
         }}>
             <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
-                <h2 style={{ marginBottom: '1rem', color: 'hsl(var(--color-primary))' }}>Welcome to Ledger</h2>
+                <h2 style={{ marginBottom: '1rem', color: 'hsl(var(--color-primary))' }}>Welcome to KhaataX</h2>
                 <p style={{ marginBottom: '2rem', color: 'hsl(var(--color-text-secondary))' }}>
                     Your fast, offline-first finance companion. <br /> Let's get you set up.
                 </p>
@@ -57,6 +61,15 @@ export const Onboarding = ({ onComplete }: { onComplete: () => void }) => {
                         ]}
                         value={currency}
                         onChange={e => setCurrency(e.target.value)}
+                        fullWidth
+                    />
+
+                    <Input
+                        label="Secure your data with a PIN (Optional)"
+                        placeholder="e.g. 1234"
+                        type="password"
+                        value={pin}
+                        onChange={e => setPin(e.target.value)}
                         fullWidth
                     />
 

@@ -5,3 +5,5 @@ export { StockDashboard } from './StockDashboard';
 export { Settings } from './Settings';
 export { Layout } from './Layout';
 export { Onboarding } from './Onboarding';
+export { LockScreen } from './LockScreen';
+export { ActivationScreen } from './ActivationScreen';

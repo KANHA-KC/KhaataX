@@ -9,6 +9,8 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Combobox } from './ui/Combobox';
 import styles from './AddTransactionModal.module.css';
+import { TransliteratedInput } from './ui/TransliteratedInput';
+import { useTranslation } from '../context/LanguageContext';
 
 interface Props {
     isOpen: boolean;
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export const AddTransactionModal: React.FC<Props> = ({ isOpen, onClose }) => {
+    const { t } = useTranslation();
     const {
         addTransaction,
         addPerson,
@@ -29,7 +32,7 @@ export const AddTransactionModal: React.FC<Props> = ({ isOpen, onClose }) => {
     const [isExpense, setIsExpense] = useState(true); // Toggle for Income/Expense
     const [accountId, setAccountId] = useState(DEFAULT_ACCOUNTS[0].id); // Default Cash
     const [categoryId, setCategoryId] = useState('');
-    const [personId, setPersonId] = useState<string | null>(null); // Optional
+    const [personId, setPersonId] = useState<string | null>(null); // Required
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [notes, setNotes] = useState('');
 
@@ -53,7 +56,7 @@ export const AddTransactionModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
     const handleSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!amount || !categoryId) return;
+        if (!amount || !categoryId || !personId) return;
 
         setIsSubmitting(true);
         try {
@@ -66,7 +69,7 @@ export const AddTransactionModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 type,
                 accountId,
                 categoryId, // TODO: Handle "Category is required" validation visually
-                payeeId: personId || undefined,
+                payeeId: personId,
                 notes: notes || undefined,
                 date,
                 createdAt: Date.now()
@@ -104,7 +107,7 @@ export const AddTransactionModal: React.FC<Props> = ({ isOpen, onClose }) => {
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 <div className={styles.header}>
-                    <h2>New Transaction</h2>
+                    <h2>{t('add_transaction')}</h2>
                     <Button variant="ghost" size="sm" onClick={onClose}>Esc</Button>
                 </div>
 
@@ -158,13 +161,14 @@ export const AddTransactionModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     />
 
                     <Combobox
-                        label="Person / Payee (Optional)"
+                        label="Person / Payee"
                         options={peopleOptions}
                         onChange={opt => setPersonId(opt?.id || null)}
                         onCreate={handlePersonCreate}
                         placeholder="Who is this with?"
                         fullWidth
                     />
+
 
                     <div className={styles.row}>
                         <Input
@@ -176,16 +180,16 @@ export const AddTransactionModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         />
                     </div>
 
-                    <Input
-                        placeholder="Notes (optional)"
+                    <TransliteratedInput
+                        placeholder={t('notes')}
                         value={notes}
-                        onChange={e => setNotes(e.target.value)}
+                        onValueChange={setNotes}
                         fullWidth
                     />
 
                     <div className={styles.footer}>
                         <Button variant="primary" type="submit" size="lg" fullWidth isLoading={isSubmitting}>
-                            Save Transaction
+                            {t('save')}
                         </Button>
                     </div>
                 </form>

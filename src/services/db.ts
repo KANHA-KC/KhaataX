@@ -138,6 +138,45 @@ export class StorageService {
     async deleteStock(id: string) {
         return (await this.dbPromise).delete('stocks', id);
     }
+
+    // --- Clear All Data ---
+    async clearAllData() {
+        const db = await this.dbPromise;
+        const tx = db.transaction(['transactions', 'people', 'categories', 'stocks'], 'readwrite');
+
+        await Promise.all([
+            tx.objectStore('transactions').clear(),
+            tx.objectStore('people').clear(),
+            tx.objectStore('categories').clear(),
+            tx.objectStore('stocks').clear(),
+        ]);
+
+        await tx.done;
+
+        // Re-seed default categories
+        for (const cat of DEFAULT_CATEGORIES) {
+            await this.addCategory(cat);
+        }
+    }
+
+    async checkIntegrity(): Promise<boolean> {
+        try {
+            const db = await this.dbPromise;
+            const stores: Array<"transactions" | "people" | "categories" | "accounts" | "stocks"> = ['transactions', 'people', 'categories', 'accounts', 'stocks'];
+            for (const store of stores) {
+                if (!db.objectStoreNames.contains(store)) {
+                    console.error(`Integrity Check Failed: Missing store ${store}`);
+                    return false;
+                }
+            }
+            // Basic read check
+            db.transaction('transactions', 'readonly');
+            return true;
+        } catch (e) {
+            console.error('Integrity Check Failed:', e);
+            return false;
+        }
+    }
 }
 
 export const dbService = new StorageService();

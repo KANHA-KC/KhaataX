@@ -1,0 +1,22 @@
+.logoContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    user-select: none;
+}
+
+
+
+.text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: hsl(var(--color-text));
+    display: flex;
+    align-items: center;
+}
+
+.highlight {
+    color: hsl(var(--color-primary));
+}

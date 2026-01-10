@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { X, Check, Search, Calendar, DollarSign, Tag, Layers } from 'lucide-react';
+import { X, Check, Search, Calendar, DollarSign, Tag, Layers, Users } from 'lucide-react';
 import styles from './FilterDrawer.module.css';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
+import { useTranslation } from '../context/LanguageContext';
+import { TransliteratedInput } from './ui/TransliteratedInput';
+import { normalizeForSearch } from '../utils/transliterate';
 
 export type FilterState = {
     type: 'all' | 'income' | 'expense';
     categories: string[]; // List of selected IDs
+    people: string[]; // List of selected IDs
     dateRange: {
         mode: 'all' | '7d' | '30d' | 'month' | 'custom';
         start: string;
@@ -21,6 +24,7 @@ export type FilterState = {
 export const INITIAL_FILTERS: FilterState = {
     type: 'all',
     categories: [],
+    people: [],
     dateRange: { mode: 'all', start: '', end: '' },
     amountRange: { min: '', max: '' }
 };
@@ -31,13 +35,16 @@ interface FilterDrawerProps {
     onApply: (filters: FilterState) => void;
     initialFilters: FilterState;
     availableCategories: { id: string; name: string; type: 'income' | 'expense' }[];
+    availablePeople: { id: string; name: string }[];
     resultCount?: number; // Optional preview of results
 }
 
-export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availableCategories }: FilterDrawerProps) => {
+export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availableCategories, availablePeople }: FilterDrawerProps) => {
+    const { t, language } = useTranslation();
     // Internal state for pending changes
     const [filters, setFilters] = useState<FilterState>(initialFilters);
     const [catSearch, setCatSearch] = useState('');
+    const [personSearch, setPersonSearch] = useState('');
 
     // Reset internal state when drawer opens
     useEffect(() => {
@@ -57,6 +64,18 @@ export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availab
                 return { ...prev, categories: current.filter(c => c !== id) };
             } else {
                 return { ...prev, categories: [...current, id] };
+            }
+        });
+    };
+
+    const togglePerson = (id: string) => {
+        setFilters(prev => {
+            const current = prev.people || [];
+            const exists = current.includes(id);
+            if (exists) {
+                return { ...prev, people: current.filter(p => p !== id) };
+            } else {
+                return { ...prev, people: [...current, id] };
             }
         });
     };
@@ -95,14 +114,30 @@ export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availab
         }));
     };
 
-    const filteredCategories = availableCategories.filter(c =>
-        (filters.type === 'all' || c.type === filters.type) &&
-        c.name.toLowerCase().includes(catSearch.toLowerCase())
-    );
+    const filteredCategories = availableCategories.filter(c => {
+        if (catSearch.trim() === '') return (filters.type === 'all' || c.type === filters.type);
+        const term = catSearch.trim().toLowerCase();
+        const normTerm = normalizeForSearch(catSearch);
+        return (
+            ((filters.type === 'all' || c.type === filters.type) && c.name.toLowerCase().includes(term)) ||
+            normalizeForSearch(c.name).includes(normTerm)
+        );
+    });
+
+    const filteredPeople = availablePeople.filter(p => {
+        if (personSearch.trim() === '') return true;
+        const term = personSearch.trim().toLowerCase();
+        const normTerm = normalizeForSearch(personSearch);
+        return (
+            p.name.toLowerCase().includes(term) ||
+            normalizeForSearch(p.name).includes(normTerm)
+        );
+    });
 
     const activeCount =
         (filters.type !== 'all' ? 1 : 0) +
         (filters.categories.length > 0 ? 1 : 0) +
+        ((filters.people?.length || 0) > 0 ? 1 : 0) +
         (filters.dateRange.mode !== 'all' ? 1 : 0) +
         (filters.amountRange.min || filters.amountRange.max ? 1 : 0);
 
@@ -110,7 +145,7 @@ export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availab
         <div className={styles.overlay} onClick={onClose}>
             <div className={styles.drawer} onClick={e => e.stopPropagation()}>
                 <header className={styles.header}>
-                    <h2>Filters</h2>
+                    <h2>{t('filters')}</h2>
                     <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
                         <X size={20} />
                     </button>
@@ -152,10 +187,10 @@ export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availab
                         </div>
                         <div style={{ position: 'relative' }}>
                             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)' }} />
-                            <Input
-                                placeholder="Search categories..."
+                            <TransliteratedInput
+                                placeholder={t('search')}
                                 value={catSearch}
-                                onChange={e => setCatSearch(e.target.value)}
+                                onValueChange={setCatSearch}
                                 style={{ height: '36px', fontSize: '0.9rem', paddingLeft: '32px' }}
                             />
                         </div>
@@ -179,6 +214,46 @@ export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availab
                                         {filters.categories.includes(c.id) && <Check size={12} />}
                                     </div>
                                     <span className={styles.itemLabel}>{c.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* People Filter */}
+                    <section className={styles.section}>
+                        <div className={styles.sectionTitle}>
+                            <Users size={14} /> {t('people')}
+                            {(filters.people?.length || 0) > 0 && <span style={{ marginLeft: 'auto', fontSize: '0.8em', color: 'var(--color-primary)' }}>{filters.people.length} selected</span>}
+                        </div>
+                        <div style={{ position: 'relative' }}>
+                            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)' }} />
+                            <TransliteratedInput
+                                placeholder={t('search')}
+                                value={personSearch}
+                                onValueChange={setPersonSearch}
+                                style={{ height: '36px', fontSize: '0.9rem', paddingLeft: '32px' }}
+                            />
+                        </div>
+                        <div className={styles.categoryList}>
+                            <div
+                                className={`${styles.categoryItem} ${(filters.people?.length || 0) === 0 ? styles.checked : ''}`}
+                                onClick={() => setFilters(p => ({ ...p, people: [] }))}
+                            >
+                                <div className={styles.checkbox}>
+                                    {(filters.people?.length || 0) === 0 && <Check size={12} />}
+                                </div>
+                                <span className={styles.itemLabel}>All People</span>
+                            </div>
+                            {filteredPeople.map(p => (
+                                <div
+                                    key={p.id}
+                                    className={`${styles.categoryItem} ${filters.people?.includes(p.id) ? styles.checked : ''}`}
+                                    onClick={() => togglePerson(p.id)}
+                                >
+                                    <div className={styles.checkbox}>
+                                        {filters.people?.includes(p.id) && <Check size={12} />}
+                                    </div>
+                                    <span className={styles.itemLabel}>{p.name}</span>
                                 </div>
                             ))}
                         </div>
@@ -259,10 +334,10 @@ export const FilterDrawer = ({ isOpen, onClose, onApply, initialFilters, availab
 
                 <footer className={styles.footer}>
                     <button className={styles.clearBtn} onClick={() => setFilters(INITIAL_FILTERS)}>
-                        Clear All
+                        {language === 'hi' ? 'सभी साफ करें' : 'Clear All'}
                     </button>
                     <Button variant="primary" onClick={() => onApply(filters)} style={{ minWidth: '120px' }}>
-                        Apply Filters {activeCount > 0 && `(${activeCount})`}
+                        {language === 'hi' ? `फिल्टर लागू करें ${activeCount > 0 ? `(${activeCount})` : ''}` : `Apply Filters ${activeCount > 0 ? `(${activeCount})` : ''}`}
                     </Button>
                 </footer>
             </div>

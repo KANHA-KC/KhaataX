@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KhaataX Admin Panel - License Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 60, 114, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #28a745;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        .output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #28a745;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .output.show {
+            display: block;
+        }
+
+        .license-display {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            letter-spacing: 2px;
+            color: #1e3c72;
+            border: 2px dashed #28a745;
+            margin: 10px 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .stat-box p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .history-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+
+        .history-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.revoked {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .warning-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🔐 KhaataX Admin Panel</h1>
+        <p>License Management System v1.0</p>
+    </div>
+
+    <div class="container">
+        <!-- Single License Generator -->
+        <div class="card">
+            <h2>
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z" />
+                </svg>
+                Single License
+            </h2>
+
+            <div class="form-group">
+                <label for="systemId">Customer System ID</label>
+                <input type="text" id="systemId" placeholder="e.g., WIN-A3F2B9C1-4D8E">
+            </div>
+
+            <div class="form-group">
+                <label for="customerName">Customer Name (Optional)</label>
+                <input type="text" id="customerName" placeholder="e.g., John Doe">
+            </div>
+
+            <div class="form-group">
+                <label for="masterSecret">Master Secret</label>
+                <input type="password" id="masterSecret" value="KhaataX-2026-SecretKey-Kanha-KC">
+            </div>
+
+            <button onclick="generateSingle()">Generate License</button>
+
+            <div class="output" id="singleOutput">
+                <div class="license-display" id="singleLicense">XXXX-XXXX-XXXX-XXXX</div>
+                <button class="copy-btn" onclick="copySingle()">📋 Copy License Key</button>
+            </div>
+        </div>
+
+        <!-- Bulk Generator -->
+        <div class="card">
+            <h2>
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path fill-rule="evenodd"
+                        d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                        clip-rule="evenodd" />
+                </svg>
+                Bulk Generator
+            </h2>
+
+            <div class="form-group">
+                <label for="bulkInput">System IDs (one per line)</label>
+                <textarea id="bulkInput"
+                    placeholder="WIN-A3F2B9C1-4D8E&#10;WIN-B7E4F1C2-9A3D&#10;WIN-C2D8E5F3-1B6A"></textarea>
+            </div>
+
+            <button onclick="generateBulk()">Generate All</button>
+
+            <div class="output" id="bulkOutput">
+                <textarea id="bulkLicenses" readonly style="min-height: 200px;"></textarea>
+                <button class="copy-btn" onclick="copyBulk()">📋 Copy All</button>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="card full-width">
+            <h2>
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                </svg>
+                Session Statistics
+            </h2>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <h3 id="totalGenerated">0</h3>
+                    <p>Licenses Generated</p>
+                </div>
+                <div class="stat-box">
+                    <h3 id="sessionTime">00:00</h3>
+                    <p>Session Duration</p>
+                </div>
+                <div class="stat-box">
+                    <h3 id="lastGenerated">-</h3>
+                    <p>Last Generated</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent History -->
+        <div class="card full-width">
+            <h2>
+                <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                        clip-rule="evenodd" />
+                </svg>
+                Recent Licenses
+            </h2>
+
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Customer</th>
+                        <th>System ID</th>
+                        <th>License Key</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTable">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">No licenses generated yet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Security Notice -->
+        <div class="card full-width">
+            <div class="warning-box">
+                <strong>🔒 Security Notice</strong>
+                This admin panel runs entirely in your browser. No data is sent to any server. Keep this file secure and
+                do not share it with customers. The Master Secret must match the value in
+                <code>src-tauri/src/lib.rs</code>.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let totalGenerated = 0;
+        let sessionStart = Date.now();
+        let history = [];
+
+        // Update session time
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('sessionTime').textContent =
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }, 1000);
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function formatLicenseKey(hex) {
+            return `${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}`.toUpperCase();
+        }
+
+        async function generateSingle() {
+            const systemId = document.getElementById('systemId').value.trim();
+            const customerName = document.getElementById('customerName').value.trim();
+            const masterSecret = document.getElementById('masterSecret').value.trim();
+
+            if (!systemId || !masterSecret) {
+                alert('Please fill in System ID and Master Secret');
+                return;
+            }
+
+            const hash = await sha256(systemId + masterSecret);
+            const license = formatLicenseKey(hash);
+
+            document.getElementById('singleLicense').textContent = license;
+            document.getElementById('singleOutput').classList.add('show');
+
+            addToHistory(customerName || 'Unknown', systemId, license);
+        }
+
+        async function generateBulk() {
+            const bulkInput = document.getElementById('bulkInput').value.trim();
+            const masterSecret = document.getElementById('masterSecret').value.trim();
+
+            if (!bulkInput || !masterSecret) {
+                alert('Please fill in System IDs and Master Secret');
+                return;
+            }
+
+            const systemIds = bulkInput.split('\n').filter(id => id.trim());
+            const results = [];
+
+            for (const systemId of systemIds) {
+                const hash = await sha256(systemId.trim() + masterSecret);
+                const license = formatLicenseKey(hash);
+                results.push(`${systemId.trim()}\t${license}`);
+                addToHistory('Bulk', systemId.trim(), license);
+            }
+
+            document.getElementById('bulkLicenses').value = results.join('\n');
+            document.getElementById('bulkOutput').classList.add('show');
+        }
+
+        function copySingle() {
+            const license = document.getElementById('singleLicense').textContent;
+            navigator.clipboard.writeText(license).then(() => {
+                const btn = event.target;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy License Key', 2000);
+            });
+        }
+
+        function copyBulk() {
+            const licenses = document.getElementById('bulkLicenses').value;
+            navigator.clipboard.writeText(licenses).then(() => {
+                const btn = event.target;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => btn.textContent = '📋 Copy All', 2000);
+            });
+        }
+
+        function addToHistory(customer, systemId, license) {
+            totalGenerated++;
+            document.getElementById('totalGenerated').textContent = totalGenerated;
+            document.getElementById('lastGenerated').textContent = new Date().toLocaleTimeString();
+
+            const entry = {
+                time: new Date().toLocaleTimeString(),
+                customer,
+                systemId: systemId.substring(0, 20) + '...',
+                license,
+                status: 'active'
+            };
+
+            history.unshift(entry);
+            if (history.length > 10) history.pop();
+
+            updateHistoryTable();
+        }
+
+        function updateHistoryTable() {
+            const tbody = document.getElementById('historyTable');
+            tbody.innerHTML = history.map(entry => `
+                <tr>
+                    <td>${entry.time}</td>
+                    <td>${entry.customer}</td>
+                    <td><code>${entry.systemId}</code></td>
+                    <td><code>${entry.license}</code></td>
+                    <td><span class="badge ${entry.status}">${entry.status}</span></td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+
+</html>

@@ -8,8 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 import type { StockItem } from '../types';
 import { format } from 'date-fns';
 import styles from './StockDashboard.module.css';
+import { useTranslation } from '../context/LanguageContext';
+import { TransliteratedInput } from './ui/TransliteratedInput';
 
 export const StockDashboard = () => {
+    const { t } = useTranslation();
     const { stocks, addStock, updateStock, deleteStock } = useLedger();
 
     // Modal State
@@ -99,26 +102,26 @@ export const StockDashboard = () => {
         <div className={styles.container}>
             <div className={styles.header}>
                 <div>
-                    <h1>Stock Management</h1>
-                    <p style={{ color: 'hsl(var(--color-text-secondary))' }}>Manage Agricultural Stock Lots</p>
+                    <h1>{t('stock_management')}</h1>
+                    <p style={{ color: 'hsl(var(--color-text-secondary))' }}>{t('agricultural_lots')}</p>
                 </div>
                 <Button variant="primary" onClick={() => openAddModal()}>
                     <Plus size={18} style={{ marginRight: 8 }} />
-                    Add New Lot
+                    {t('add_lot')}
                 </Button>
             </div>
 
             <div className={styles.summaryCards}>
                 <div className={styles.card}>
-                    <span className={styles.cardTitle}>Total Principal</span>
+                    <span className={styles.cardTitle}>{t('principal_amount')}</span>
                     <span className={styles.cardValue}>{formatCurrency(totalPrincipal)}</span>
                 </div>
                 <div className={styles.card}>
-                    <span className={styles.cardTitle}>Total Loan Amount</span>
+                    <span className={styles.cardTitle}>{t('loan_amount')}</span>
                     <span className={styles.cardValue}>{formatCurrency(totalLoan)}</span>
                 </div>
                 <div className={styles.card}>
-                    <span className={styles.cardTitle}>Active Lots</span>
+                    <span className={styles.cardTitle}>{t('active_lots')}</span>
                     <span className={styles.cardValue}>{stocks.length}</span>
                 </div>
             </div>
@@ -137,36 +140,36 @@ export const StockDashboard = () => {
                         <div className={styles.detailsGrid}>
                             <div className={styles.detailItem}>
                                 <Calendar size={12} />
-                                <span>Loaded: {item.loadingDate}</span>
+                                <span>{t('loading_date')}: {item.loadingDate}</span>
                             </div>
                             <div className={styles.detailItem}>
                                 <Scale size={12} />
-                                <span>{item.noOfTins} Tins</span>
+                                <span>{item.noOfTins} {t('no_of_tins')}</span>
                             </div>
                         </div>
 
                         <div className={styles.statsGrid}>
                             <div className={styles.stat}>
-                                <span className={styles.statLabel}>Weight 01</span>
+                                <span className={styles.statLabel}>{t('weight_01')}</span>
                                 <span className={styles.statValue}>{item.weight01}</span>
                             </div>
                             <div className={styles.stat}>
-                                <span className={styles.statLabel}>Cold Wt</span>
+                                <span className={styles.statLabel}>{t('cold_weight')}</span>
                                 <span className={styles.statValue}>{item.coldWeight}</span>
                             </div>
                             <div className={styles.stat}>
-                                <span className={styles.statLabel}>Principal</span>
+                                <span className={styles.statLabel}>{t('principal_amount')}</span>
                                 <span className={styles.statValue}>{formatCurrency(item.principalAmount)}</span>
                             </div>
                             <div className={styles.stat}>
-                                <span className={styles.statLabel}>Loan</span>
+                                <span className={styles.statLabel}>{t('loan_amount')}</span>
                                 <span className={styles.statValue}>{formatCurrency(item.loanAmount)}</span>
                             </div>
                         </div>
 
                         <div className={styles.actions}>
                             <button className={styles.btnEditOutline} onClick={() => openAddModal(item)}>
-                                <Edit2 size={14} style={{ marginRight: 4 }} /> Edit Details
+                                <Edit2 size={14} style={{ marginRight: 4 }} /> {t('edit_details')}
                             </button>
                         </div>
                     </div>
@@ -178,52 +181,51 @@ export const StockDashboard = () => {
                 <div className={styles.modalOverlay} onClick={() => setIsAddModalOpen(false)}>
                     <div className={styles.modal} onClick={e => e.stopPropagation()}>
                         <div className={styles.modalHeader}>
-                            <h2>{selectedItem ? 'Edit Lot' : 'New Stock Lot'}</h2>
+                            <h2>{selectedItem ? t('edit_details') : t('add_lot')}</h2>
                             <button className={styles.btnIcon} onClick={() => setIsAddModalOpen(false)}><X size={20} /></button>
                         </div>
 
                         <div className={styles.scrollableForm}>
-                            <h3 className={styles.sectionTitle}>Party Details</h3>
+                            <h3 className={styles.sectionTitle}>Party Information</h3>
                             <div className={styles.formRow}>
-                                <Input label="Party Name (Firm)" value={partyName} onChange={e => setPartyName(e.target.value)} placeholder="e.g. Jai Gurudev" />
-                                <Input label="Marfad" value={marfad} onChange={e => setMarfad(e.target.value)} placeholder="e.g. Kisaan Name" />
+                                <TransliteratedInput label={t('party_name')} value={partyName} onValueChange={setPartyName} placeholder="e.g. Jai Gurudev" />
+                                <TransliteratedInput label={t('marfad')} value={marfad} onValueChange={setMarfad} placeholder="e.g. Kisaan Name" />
                             </div>
 
                             <h3 className={styles.sectionTitle}>Stock Details</h3>
                             <div className={styles.formRow}>
-                                <Input label="Loading Date" type="date" value={loadingDate} onChange={e => setLoadingDate(e.target.value)} />
-                                <Input label="Lot No / Tins" value={lotNumber} onChange={e => setLotNumber(e.target.value)} placeholder="Lot #123" />
+                                <Input label={t('loading_date')} type="date" value={loadingDate} onChange={e => setLoadingDate(e.target.value)} />
+                                <Input label={t('lot_no')} value={lotNumber} onChange={e => setLotNumber(e.target.value)} placeholder="Lot #123" />
+                            </div>
+                            <div className={styles.formRowSingle}>
+                                <Input label={t('no_of_tins')} type="number" value={noOfTins} onChange={e => setNoOfTins(e.target.value)} />
                             </div>
                             <div className={styles.formRow}>
-                                <Input label="No of Tins" type="number" value={noOfTins} onChange={e => setNoOfTins(e.target.value)} />
-                                <div />
-                            </div>
-                            <div className={styles.formRow}>
-                                <Input label="Weight 01" type="number" value={weight01} onChange={e => setWeight01(e.target.value)} />
-                                <Input label="Cold Weight (Wt 02)" type="number" value={coldWeight} onChange={e => setColdWeight(e.target.value)} />
+                                <Input label={t('weight_01')} type="number" value={weight01} onChange={e => setWeight01(e.target.value)} />
+                                <Input label={t('cold_weight')} type="number" value={coldWeight} onChange={e => setColdWeight(e.target.value)} />
                             </div>
 
-                            <h3 className={styles.sectionTitle}>Financials</h3>
+                            <h3 className={styles.sectionTitle}>Financial Details</h3>
                             <div className={styles.formRow}>
-                                <Input label="Principal Amount" type="number" value={principalAmount} onChange={e => setPrincipalAmount(e.target.value)} />
-                                <Input label="Rate of Interest" type="number" value={interestRate} onChange={e => setInterestRate(e.target.value)} placeholder="%" />
+                                <Input label={t('principal_amount')} type="number" value={principalAmount} onChange={e => setPrincipalAmount(e.target.value)} />
+                                <Input label={t('interest_rate')} type="number" value={interestRate} onChange={e => setInterestRate(e.target.value)} placeholder="%" />
                             </div>
                             <div className={styles.formRow}>
-                                <Input label="Loan Amount" type="number" value={loanAmount} onChange={e => setLoanAmount(e.target.value)} />
-                                <Input label="Loan Date" type="date" value={loanDate} onChange={e => setLoanDate(e.target.value)} />
+                                <Input label={t('loan_amount')} type="number" value={loanAmount} onChange={e => setLoanAmount(e.target.value)} />
+                                <Input label={t('loan_date')} type="date" value={loanDate} onChange={e => setLoanDate(e.target.value)} />
                             </div>
                         </div>
 
                         <div className={styles.modalFooter}>
                             {selectedItem && (
                                 <Button variant="ghost" style={{ color: 'hsl(var(--color-danger))', marginRight: 'auto' }} onClick={async () => {
-                                    if (confirm('Delete this lot?')) {
+                                    if (confirm(t('delete_permanently'))) {
                                         await deleteStock(selectedItem.id);
                                         setIsAddModalOpen(false);
                                     }
-                                }}>Delete</Button>
+                                }}>{t('delete_permanently')}</Button>
                             )}
-                            <Button variant="primary" onClick={handleSaveItem}>Save Lot</Button>
+                            <Button variant="primary" onClick={handleSaveItem}>{t('save')}</Button>
                         </div>
                     </div>
                 </div>

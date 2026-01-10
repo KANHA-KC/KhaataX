@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
-import { Input } from './Input';
+import { TransliteratedInput } from './TransliteratedInput';
 import styles from './Combobox.module.css';
+import { useTranslation } from '../../context/LanguageContext';
 
 interface Option {
     id: string;
@@ -31,6 +32,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
     fullWidth,
     autoFocus
 }) => {
+    const { t, language } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -110,21 +112,21 @@ export const Combobox: React.FC<ComboboxProps> = ({
 
     return (
         <div className={`${styles.wrapper} ${fullWidth ? styles.fullWidth : ''}`} ref={containerRef}>
-            <Input
-                ref={inputRef}
+            <TransliteratedInput
+                ref={inputRef as any}
                 label={label}
                 value={searchTerm}
-                onChange={e => {
-                    setSearchTerm(e.target.value);
+                onValueChange={val => {
+                    setSearchTerm(val);
                     setIsOpen(true);
                     setHighlightedIndex(0);
-                    if (e.target.value === '') {
+                    if (val === '') {
                         onChange(null); // Clear selection
                     }
                 }}
                 onFocus={() => setIsOpen(true)}
                 onKeyDown={handleKeyDown}
-                placeholder={placeholder}
+                placeholder={placeholder || t('search')}
                 fullWidth
                 autoComplete="off"
                 autoFocus={autoFocus}
@@ -147,7 +149,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
                             className={`${styles.item} ${styles.create} ${highlightedIndex === filteredOptions.length ? styles.highlighted : ''}`}
                             onClick={handleCreate}
                         >
-                            Create "{searchTerm}"
+                            {language === 'hi' ? `"${searchTerm}" बनाएं` : `Create "${searchTerm}"`}
                         </li>
                     )}
                 </ul>

@@ -1,21 +1,36 @@
 import React, { useMemo, useState } from 'react';
 import { useLedger } from '../context/LedgerContext';
 import { formatCurrency } from '../utils/format'; // Will create this utility
-import { Plus, TrendingUp, TrendingDown, Users, Sparkles } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, Users, Sparkles, AlertTriangle } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { useInsights } from '../hooks/useInsights';
 import { Button } from './ui/Button';
 import { AddTransactionModal } from './AddTransactionModal';
 import styles from './Dashboard.module.css';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { useTranslation } from '../context/LanguageContext';
 
 interface DashboardProps {
     onNavigate: (view: 'dashboard' | 'transactions' | 'people') => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+    const { t } = useTranslation();
     const { transactions, people, categories } = useLedger();
     const [showAddModal, setShowAddModal] = useState(false);
+
+    const isBackupOld = useMemo(() => {
+        const lastSync = localStorage.getItem('last_sync_time');
+        if (!lastSync) return true;
+
+        try {
+            const lastDate = new Date(lastSync);
+            const diffDays = (new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24);
+            return diffDays > 7;
+        } catch (e) {
+            return true;
+        }
+    }, []);
 
     // --- Metrics Calculation ---
     const currentMonthMetrics = useMemo(() => {
@@ -96,20 +111,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         <div className={styles.dashboard}>
             <header className={styles.header}>
                 <div>
-                    <h1 className={styles.title}>Dashboard</h1>
+                    <h1 className={styles.title}>{t('dashboard')}</h1>
                     <p className={styles.subtitle}>Overview for {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}</p>
                 </div>
                 <Button variant="primary" onClick={() => setShowAddModal(true)} size="lg">
                     <Plus size={18} style={{ marginRight: 8 }} />
-                    Add Transaction
+                    {t('add_transaction')}
                 </Button>
             </header>
+
+            {isBackupOld && (
+                <div className={styles.backupAlert} onClick={() => onNavigate('settings' as any)}>
+                    <AlertTriangle size={18} />
+                    <span>You haven't backed up your data recently. <strong>Secure your data now.</strong></span>
+                </div>
+            )}
 
             <div className={styles.grid}>
                 {/* Metric Cards */}
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
-                        <span className={styles.cardLabel}>This Month Debit</span>
+                        <span className={styles.cardLabel}>{t('total_debit')}</span>
                         <div className={`${styles.iconBox} ${styles.danger}`}>
                             <TrendingDown size={20} />
                         </div>
@@ -121,7 +143,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
-                        <span className={styles.cardLabel}>This Month Credit</span>
+                        <span className={styles.cardLabel}>{t('total_credit')}</span>
                         <div className={`${styles.iconBox} ${styles.success}`}>
                             <TrendingUp size={20} />
                         </div>
@@ -134,7 +156,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 {/* People Quick View */}
                 <div className={styles.card} onClick={() => onNavigate('people')} style={{ cursor: 'pointer' }}>
                     <div className={styles.cardHeader}>
-                        <span className={styles.cardLabel}>People Ledger</span>
+                        <span className={styles.cardLabel}>People</span>
                         <div className={`${styles.iconBox} ${styles.primary}`}>
                             <Users size={20} />
                         </div>

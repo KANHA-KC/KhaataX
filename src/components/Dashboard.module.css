@@ -22,6 +22,28 @@
     font-size: 0.95rem;
 }
 
+.backupAlert {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-6);
+    background: #fff8eb;
+    border: 1px solid #ffe5b3;
+    border-radius: var(--radius-lg);
+    color: #856404;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.backupAlert:hover {
+    background: #fff3cd;
+    transform: translateY(-1px);
+}
+
+.backupAlert strong {
+    text-decoration: underline;
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

@@ -41,8 +41,8 @@ export async function seedData(count: number = 100) {
         const typeCats = categories.filter(c => c.type === type);
         const category = typeCats[Math.floor(Math.random() * typeCats.length)];
 
-        // Random person (sometimes null)
-        const person = Math.random() > 0.5 ? people[Math.floor(Math.random() * people.length)] : null;
+        // Random person (always assigned now - required field)
+        const person = people[Math.floor(Math.random() * people.length)];
 
         // Random amount 10 - 5000
         const amount = Math.floor(Math.random() * 4990) + 10;
@@ -56,8 +56,9 @@ export async function seedData(count: number = 100) {
             type,
             categoryId: category?.id || DEFAULT_CATEGORIES[0].id,
             accountId: accounts[0].id, // Default to Cash/Main for simplicity
-            payeeId: person?.id,
+            payeeId: person.id,
             notes: SAMPLE_NOTES[Math.floor(Math.random() * SAMPLE_NOTES.length)],
+
             createdAt: Date.now()
         };
 

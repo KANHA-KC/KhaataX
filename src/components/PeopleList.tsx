@@ -3,8 +3,10 @@ import { useLedger } from '../context/LedgerContext';
 import { formatCurrency } from '../utils/format';
 import { PersonDetailModal } from './PersonDetailModal'; // Will create next
 import styles from './PeopleList.module.css';
+import { useTranslation } from '../context/LanguageContext';
 
 export const PeopleList = () => {
+    const { t } = useTranslation();
     const { people, transactions } = useLedger();
     const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
 
@@ -60,7 +62,7 @@ export const PeopleList = () => {
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h1>People</h1>
+                <h1>{t('people')}</h1>
                 {/* Logic to add person manually if needed, though usually done via Transaction */}
             </header>
 
@@ -83,7 +85,7 @@ export const PeopleList = () => {
 
                             <div className={styles.balanceRow}>
                                 <span className={styles.label}>
-                                    {isSettled ? 'Settled' : (isTheyOwe ? 'Owes You' : 'You Owe')}
+                                    {isSettled ? t('settled') : (isTheyOwe ? t('owes_you') : t('you_owe'))}
                                 </span>
                                 <span className={`
                                 ${styles.amount} 
@@ -95,9 +97,9 @@ export const PeopleList = () => {
                             </div>
 
                             <div className={styles.miniStats}>
-                                <div>Debit: {formatCurrency(p.iPaid)}</div>
+                                <div>{t('total_debit')}: {formatCurrency(p.iPaid)}</div>
                                 <div className={styles.divider}>•</div>
-                                <div>Credit: {formatCurrency(p.theyPaid)}</div>
+                                <div>{t('total_credit')}: {formatCurrency(p.theyPaid)}</div>
                             </div>
                         </div>
                     );
