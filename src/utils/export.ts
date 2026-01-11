@@ -6,11 +6,10 @@ import { writeTextFile, writeFile } from '@tauri-apps/plugin-fs';
 
 const isTauri = !!(window as any).__TAURI_INTERNALS__;
 
-
 // Helper to format date
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
 
-export const exportToCSV = (transactions: Transaction[], categories: Category[], people: Person[], filename = 'transactions.csv') => {
+export const exportToCSV = async (transactions: Transaction[], categories: Category[], people: Person[], filename = 'transactions.csv') => {
     // Header
     const headers = ['Date', 'Payee/Person', 'Category', 'Type', 'Amount', 'Account', 'Notes'];
 
@@ -18,10 +17,6 @@ export const exportToCSV = (transactions: Transaction[], categories: Category[],
     const rows = transactions.map(t => {
         const category = categories.find(c => c.id === t.categoryId)?.name || 'Uncategorized';
         const person = people.find(p => p.id === t.payeeId)?.name || '';
-        // const payee = person || t.notes || 'Unknown'; // Fallback logic removed as unused
-
-        // Note: In our app logic, payeeId links to Person. If null, it's a general transaction, usually we use notes or a generic "Payee" field if we had one.
-        // For CSV, let's use Person Name or "General".
 
         return [
             formatDate(t.date),
@@ -31,27 +26,35 @@ export const exportToCSV = (transactions: Transaction[], categories: Category[],
             t.amount,
             t.accountId,
             t.notes || ''
-        ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(','); // Escape quotes
+        ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
 
     if (isTauri) {
-        save({
-            filters: [{
-                name: 'CSV File',
-                extensions: ['csv']
-            }],
-            defaultPath: filename
-        }).then(async (path) => {
+        try {
+            const path = await save({
+                filters: [{
+                    name: 'CSV File',
+                    extensions: ['csv']
+                }],
+                defaultPath: filename
+            });
+
             if (path) {
-                await writeTextFile(path, csvContent);
-                alert('Export saved successfully!');
+                try {
+                    await writeTextFile(path, csvContent);
+                    alert('✅ CSV exported successfully!');
+                    console.log('CSV saved to:', path);
+                } catch (writeErr: any) {
+                    console.error('Write error:', writeErr);
+                    alert(`❌ Failed to save file: ${writeErr.message || 'Unknown error'}`);
+                }
             }
-        }).catch(err => {
-            console.error('Failed to save file:', err);
-            alert('Failed to save file');
-        });
+        } catch (dialogErr: any) {
+            console.error('Dialog error:', dialogErr);
+            alert(`❌ Save dialog failed: ${dialogErr.message || 'Unknown error'}`);
+        }
     } else {
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -67,7 +70,7 @@ export const exportToCSV = (transactions: Transaction[], categories: Category[],
     }
 };
 
-export const exportToPDF = (transactions: Transaction[], categories: Category[], people: Person[], filename = 'transactions.pdf') => {
+export const exportToPDF = async (transactions: Transaction[], categories: Category[], people: Person[], filename = 'transactions.pdf') => {
     const doc = new jsPDF();
 
     const currency = localStorage.getItem('ledger_currency') || 'INR';
@@ -102,26 +105,34 @@ export const exportToPDF = (transactions: Transaction[], categories: Category[],
         body: tableRows,
         startY: 25,
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [30, 41, 59] }, // Slate-800
+        headStyles: { fillColor: [30, 41, 59] },
     });
 
     if (isTauri) {
-        const pdfOutput = doc.output('arraybuffer');
-        save({
-            filters: [{
-                name: 'PDF File',
-                extensions: ['pdf']
-            }],
-            defaultPath: filename
-        }).then(async (path) => {
+        try {
+            const pdfOutput = doc.output('arraybuffer');
+            const path = await save({
+                filters: [{
+                    name: 'PDF File',
+                    extensions: ['pdf']
+                }],
+                defaultPath: filename
+            });
+
             if (path) {
-                await writeFile(path, new Uint8Array(pdfOutput));
-                alert('PDF saved successfully!');
+                try {
+                    await writeFile(path, new Uint8Array(pdfOutput));
+                    alert('✅ PDF exported successfully!');
+                    console.log('PDF saved to:', path);
+                } catch (writeErr: any) {
+                    console.error('Write error:', writeErr);
+                    alert(`❌ Failed to save PDF: ${writeErr.message || 'Unknown error'}`);
+                }
             }
-        }).catch(err => {
-            console.error('Failed to save PDF:', err);
-            alert('Failed to save PDF');
-        });
+        } catch (dialogErr: any) {
+            console.error('Dialog error:', dialogErr);
+            alert(`❌ Save dialog failed: ${dialogErr.message || 'Unknown error'}`);
+        }
     } else {
         doc.save(filename);
     }

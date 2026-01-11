@@ -1,0 +1,181 @@
+.container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+.loadingBox {
+    background: white;
+    padding: 3rem;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 1rem;
+    border: 4px solid #f3f4f6;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.licenseBox {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+}
+
+.licenseBox h1 {
+    margin: 0 0 0.5rem;
+    font-size: 1.75rem;
+    color: #1f2937;
+    text-align: center;
+}
+
+.subtitle {
+    margin: 0 0 2rem;
+    color: #6b7280;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+.systemIdSection {
+    margin-bottom: 1.5rem;
+}
+
+.systemIdSection label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.systemIdBox {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    background: #f9fafb;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.systemIdBox code {
+    flex: 1;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.copyBtn {
+    padding: 0.4rem 0.8rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.copyBtn:hover {
+    background: #5a67d8;
+}
+
+.hint {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.inputSection {
+    margin-bottom: 1.5rem;
+}
+
+.inputSection label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.licenseInput {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: border-color 0.2s;
+}
+
+.licenseInput:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.error {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.activateBtn {
+    width: 100%;
+    padding: 0.875rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.activateBtn:hover {
+    transform: translateY(-2px);
+}
+
+.helpSection {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.helpSection p {
+    margin: 0.25rem 0;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.contactInfo {
+    color: #667eea !important;
+    font-weight: 500;
+}

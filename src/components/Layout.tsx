@@ -10,44 +10,53 @@ interface LayoutProps {
     onViewChange: (view: 'dashboard' | 'transactions' | 'people' | 'settings' | 'stocks') => void;
 }
 
+const isTauri = !!(window as any).__TAURI_INTERNALS__;
+
 export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewChange }) => {
     const { t } = useTranslation();
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [storageUsage, setStorageUsage] = useState<{ percent: number, isCritical: boolean } | null>(null);
 
     useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
-        const handleOffline = () => setIsOnline(false);
+        // Online/offline detection doesn't work in Tauri (desktop protocol)
+        // Only enable for web version
+        if (!isTauri) {
+            const handleOnline = () => setIsOnline(true);
+            const handleOffline = () => setIsOnline(false);
 
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
+            window.addEventListener('online', handleOnline);
+            window.addEventListener('offline', handleOffline);
 
-        // Check storage quota
-        const checkQuota = async () => {
-            if ('storage' in navigator && 'estimate' in navigator.storage) {
-                try {
-                    const { usage, quota } = await navigator.storage.estimate();
-                    if (usage !== undefined && quota !== undefined) {
-                        const percent = (usage / quota) * 100;
-                        setStorageUsage({
-                            percent,
-                            isCritical: percent > 80
-                        });
+            // Check storage quota
+            const checkQuota = async () => {
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    try {
+                        const { usage, quota } = await navigator.storage.estimate();
+                        if (usage !== undefined && quota !== undefined) {
+                            const percent = (usage / quota) * 100;
+                            setStorageUsage({
+                                percent,
+                                isCritical: percent > 80
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Storage estimate failed', e);
                     }
-                } catch (e) {
-                    console.warn('Storage estimate failed', e);
                 }
-            }
-        };
+            };
 
-        checkQuota();
-        const quotaInterval = setInterval(checkQuota, 60000); // Check every minute
+            checkQuota();
+            const quotaInterval = setInterval(checkQuota, 60000);
 
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-            clearInterval(quotaInterval);
-        };
+            return () => {
+                window.removeEventListener('online', handleOnline);
+                window.removeEventListener('offline', handleOffline);
+                clearInterval(quotaInterval);
+            };
+        } else {
+            // Desktop: Always show as ready (app works offline)
+            setIsOnline(true);
+        }
     }, []);
 
     return (
@@ -100,18 +109,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onViewCha
                 </nav>
 
                 <div className={styles.footer}>
-                    <div className={styles.statusSection}>
-                        <div className={`${styles.statusItem} ${isOnline ? styles.online : styles.offline}`}>
-                            {isOnline ? <Wifi size={14} /> : <WifiOff size={14} />}
-                            <span>{isOnline ? 'Cloud Sync Ready' : 'Offline Mode'}</span>
-                        </div>
-                        {storageUsage && (
-                            <div className={`${styles.statusItem} ${storageUsage.isCritical ? styles.storageCritical : styles.storageNormal}`}>
-                                <HardDrive size={14} />
-                                <span>Storage: {storageUsage.percent.toFixed(1)}%</span>
+                    {/* Only show online status on web version */}
+                    {!isTauri && (
+                        <div className={styles.statusSection}>
+                            <div className={`${styles.statusItem} ${isOnline ? styles.online : styles.offline}`}>
+                                {isOnline ? <Wifi size={14} /> : <WifiOff size={14} />}
+                                <span>{isOnline ? 'Cloud Sync Ready' : 'Offline Mode'}</span>
                             </div>
-                        )}
-                    </div>
+                            {storageUsage && (
+                                <div className={`${styles.statusItem} ${storageUsage.isCritical ? styles.storageCritical : styles.storageNormal}`}>
+                                    <HardDrive size={14} />
+                                    <span>Storage: {storageUsage.percent.toFixed(1)}%</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className={styles.user}>
                         <div className={styles.avatar}>

@@ -11,8 +11,8 @@ import {
   Settings,
   Layout,
   LockScreen,
-
 } from './components';
+import { LicenseGate } from './components/LicenseGate';
 
 function AppContent() {
   const [hasProfile, setHasProfile] = useState(false);
@@ -90,11 +90,13 @@ function AppContent() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <LedgerProvider>
-        <AppContent />
-      </LedgerProvider>
-    </LanguageProvider>
+    <LicenseGate>
+      <LanguageProvider>
+        <LedgerProvider>
+          <AppContent />
+        </LedgerProvider>
+      </LanguageProvider>
+    </LicenseGate>
   )
 }
 
