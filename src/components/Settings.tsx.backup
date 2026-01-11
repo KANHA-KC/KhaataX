@@ -119,54 +119,20 @@ export const Settings = () => {
             alert('Configuration Error: Google Client ID is missing. Please check .env file.');
             return;
         }
-        if (isTauri) {
-            // Desktop: Use device code flow
-            setIsAuthorizing(true);
-            try {
-                const { userCode, verificationUrl } = await googleDriveDesktopService.authorize();
-                setDesktopUserCode(userCode);
 
-                // Poll for completion
-                const checkAuth = setInterval(() => {
-                    if (googleDriveDesktopService.isAuthenticated()) {
-                        clearInterval(checkAuth);
-                        setIsAuthorizing(false);
-                        setDesktopUserCode('');
-                        setDriveConnected(true);
-                        setAccountEmail('Connected Account');
-                        localStorage.setItem('drive_connected_status', 'true');
-                        alert('✅ Google Drive connected successfully!');
-                    }
-                }, 2000);
-                // Timeout after 5 minutes
-                setTimeout(() => {
-                    clearInterval(checkAuth);
-                    if (!googleDriveDesktopService.isAuthenticated()) {
-                        setIsAuthorizing(false);
-                        setDesktopUserCode('');
-                        alert('❌ Authorization timeout. Please try again.');
-                    }
-                }, 300000);
-            } catch (error: any) {
-                console.error('Desktop auth error:', error);
-                setIsAuthorizing(false);
-                setDesktopUserCode('');
-                alert(`❌ Connection failed: ${error.message}`);
+        try {
+            await googleDriveService.initClient({ clientId: GOOGLE_CLIENT_ID });
+            const token = await googleDriveService.signIn();
+            if (token) {
+                // No need to store client_id in local storage anymore, but we keep drive status
+                setAccountEmail('Connected Account');
+                setAccountEmail('Connected Account');
+                setDriveConnected(true);
+                localStorage.setItem('drive_connected_status', 'true');
             }
-        } else {
-            // Web: Use existing popup flow
-            try {
-                await googleDriveService.initClient({ clientId: GOOGLE_CLIENT_ID });
-                const token = await googleDriveService.signIn();
-                if (token) {
-                    setAccountEmail('Connected Account');
-                    setDriveConnected(true);
-                    localStorage.setItem('drive_connected_status', 'true');
-                }
-            } catch (error: any) {
-                console.error('Drive connection error:', error);
-                alert(`Connection failed: ${error.message || JSON.stringify(error)}`);
-            }
+        } catch (error: any) {
+            console.error('Drive connection error:', error);
+            alert(`Connection failed: ${error.message || JSON.stringify(error)}`);
         }
     };
 
@@ -513,48 +479,9 @@ export const Settings = () => {
                             {/* Config Section for Client ID - Removed Custom Input */}
                             {!driveConnected && (
                                 <div style={{ marginTop: '1rem' }}>
-                                    {isTauri && isAuthorizing && desktopUserCode && (
-                                        <div style={{
-                                            padding: '1rem',
-                                            background: 'var(--bg-elevated)',
-                                            borderRadius: '8px',
-                                            marginBottom: '1rem',
-                                            border: '2px solid var(--accent)'
-                                        }}>
-                                            <div style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
-                                                Authorization in Progress
-                                            </div>
-                                            <div style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                                                1. Browser should have opened automatically<br />
-                                                2. Sign in to your Google account<br />
-                                                3. Enter this code when prompted:
-                                            </div>
-                                            <div style={{
-                                                padding: '1rem',
-                                                background: 'var(--bg-app)',
-                                                borderRadius: '6px',
-                                                textAlign: 'center',
-                                                fontFamily: 'monospace',
-                                                fontSize: '1.5rem',
-                                                fontWeight: 'bold',
-                                                letterSpacing: '0.2em',
-                                                color: 'var(--accent)'
-                                            }}>
-                                                {desktopUserCode}
-                                            </div>
-                                            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                                                Waiting for authorization...
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <Button
-                                        style={{ width: '100%' }}
-                                        onClick={handleDriveConnect}
-                                        disabled={isAuthorizing}
-                                    >
+                                    <Button style={{ width: '100%' }} onClick={handleDriveConnect}>
                                         <Cloud size={16} style={{ marginRight: '8px' }} />
-                                        {isAuthorizing ? 'Authorizing...' : 'Connect Google Drive'}
+                                        Connect Google Drive
                                     </Button>
                                 </div>
                             )}

@@ -1,0 +1,60 @@
+// Add this to the handleDriveConnect function in Settings.tsx
+// Replace lines 117-137 with this:
+
+const handleDriveConnect = async () => {
+    if (!GOOGLE_CLIENT_ID) {
+        alert('Configuration Error: Google Client ID is missing. Please check .env file.');
+        return;
+    }
+
+    if (isTauri) {
+        // Desktop: Use device code flow
+        setIsAuthorizing(true);
+        try {
+            const { userCode, verificationUrl } = await googleDriveDesktopService.authorize();
+            setDesktopUserCode(userCode);
+            
+            // Poll for completion
+            const checkAuth = setInterval(() => {
+                if (googleDriveDesktopService.isAuthenticated()) {
+                    clearInterval(checkAuth);
+                    setIsAuthorizing(false);
+                    setDesktopUserCode('');
+                    setDriveConnected(true);
+                    setAccountEmail('Connected Account');
+                    localStorage.setItem('drive_connected_status', 'true');
+                    alert('✅ Google Drive connected successfully!');
+                }
+            }, 2000);
+
+            // Timeout after 5 minutes
+            setTimeout(() => {
+                clearInterval(checkAuth);
+                if (!googleDriveDesktopService.isAuthenticated()) {
+                    setIsAuthorizing(false);
+                    setDesktopUserCode('');
+                    alert('❌ Authorization timeout. Please try again.');
+                }
+            }, 300000);
+        } catch (error: any) {
+            console.error('Desktop auth error:', error);
+            setIsAuthorizing(false);
+            setDesktopUserCode('');
+            alert(`❌ Connection failed: ${error.message}`);
+        }
+    } else {
+        // Web: Use existing popup flow
+        try {
+            await googleDriveService.initClient({ clientId: GOOGLE_CLIENT_ID });
+            const token = await googleDriveService.signIn();
+            if (token) {
+                setAccountEmail('Connected Account');
+                setDriveConnected(true);
+                localStorage.setItem('drive_connected_status', 'true');
+            }
+        } catch (error: any) {
+            console.error('Drive connection error:', error);
+            alert(`Connection failed: ${error.message || JSON.stringify(error)}`);
+        }
+    }
+};
