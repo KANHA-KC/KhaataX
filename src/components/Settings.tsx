@@ -123,7 +123,7 @@ export const Settings = () => {
             // Desktop: Use device code flow
             setIsAuthorizing(true);
             try {
-                const { userCode, verificationUrl } = await googleDriveDesktopService.authorize();
+                const { userCode } = await googleDriveDesktopService.authorize();
                 setDesktopUserCode(userCode);
 
                 // Poll for completion
