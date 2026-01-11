@@ -1,6 +1,10 @@
 import type { Transaction, Category, Person } from '../types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile, writeFile } from '@tauri-apps/plugin-fs';
+
+const isTauri = !!(window as any).__TAURI_INTERNALS__;
 
 
 // Helper to format date
@@ -31,16 +35,35 @@ export const exportToCSV = (transactions: Transaction[], categories: Category[],
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+
+    if (isTauri) {
+        save({
+            filters: [{
+                name: 'CSV File',
+                extensions: ['csv']
+            }],
+            defaultPath: filename
+        }).then(async (path) => {
+            if (path) {
+                await writeTextFile(path, csvContent);
+                alert('Export saved successfully!');
+            }
+        }).catch(err => {
+            console.error('Failed to save file:', err);
+            alert('Failed to save file');
+        });
+    } else {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     }
 };
 
@@ -82,5 +105,24 @@ export const exportToPDF = (transactions: Transaction[], categories: Category[],
         headStyles: { fillColor: [30, 41, 59] }, // Slate-800
     });
 
-    doc.save(filename);
+    if (isTauri) {
+        const pdfOutput = doc.output('arraybuffer');
+        save({
+            filters: [{
+                name: 'PDF File',
+                extensions: ['pdf']
+            }],
+            defaultPath: filename
+        }).then(async (path) => {
+            if (path) {
+                await writeFile(path, new Uint8Array(pdfOutput));
+                alert('PDF saved successfully!');
+            }
+        }).catch(err => {
+            console.error('Failed to save PDF:', err);
+            alert('Failed to save PDF');
+        });
+    } else {
+        doc.save(filename);
+    }
 };

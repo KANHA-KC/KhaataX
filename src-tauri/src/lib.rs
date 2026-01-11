@@ -43,6 +43,7 @@ fn generate_license_key(system_id: &str) -> String {
 pub fn run() {
   tauri::Builder::default()
     .plugin(tauri_plugin_fs::init())
+    .plugin(tauri_plugin_dialog::init())
     .invoke_handler(tauri::generate_handler![get_system_id, verify_license])
     .setup(|app| {
       if cfg!(debug_assertions) {
