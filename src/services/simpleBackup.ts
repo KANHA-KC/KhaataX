@@ -1,9 +1,10 @@
-import { BaseDirectory, exists, create, writeTextFile, readTextFile, readDir } from '@tauri-apps/plugin-fs';
-import { open } from '@tauri-apps/plugin-shell';
+import { writeTextFile, readTextFile, readDir } from '@tauri-apps/plugin-fs';
+import { open as openShell } from '@tauri-apps/plugin-shell';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { documentDir } from '@tauri-apps/api/path';
 
-const BACKUP_DIR = 'KhaataX/Backups';
 const isTauri = !!(window as any).__TAURI_INTERNALS__;
+const STORAGE_KEY = 'khaatax_backup_path';
 
 interface BackupData {
     version: string;
@@ -16,38 +17,50 @@ interface BackupData {
 
 export class LocalBackupService {
     /**
-     * Ensure backup directory exists
+     * Get the currently configured backup path
      */
-    private async ensureBackupDir(): Promise<string> {
-        if (!isTauri) {
-            throw new Error('Local backup only works in desktop app');
-        }
+    getStoredPath(): string | null {
+        return localStorage.getItem(STORAGE_KEY);
+    }
+
+    /**
+     * Prompt user to select a backup folder
+     */
+    async selectBackupFolder(): Promise<string | null> {
+        if (!isTauri) return null;
 
         try {
-            const docDir = await documentDir();
-            const backupPath = `${docDir}/${BACKUP_DIR}`;
+            const selected = await openDialog({
+                directory: true,
+                multiple: false,
+                title: 'Select Backup Folder',
+                defaultPath: await documentDir()
+            });
 
-            // Check if directory exists
-            const dirExists = await exists(BACKUP_DIR, { baseDir: BaseDirectory.Document });
-
-            if (!dirExists) {
-                // Create directory recursively
-                await create(`${BACKUP_DIR}`, { baseDir: BaseDirectory.Document });
-                console.log('Created backup directory:', backupPath);
+            if (selected && typeof selected === 'string') {
+                localStorage.setItem(STORAGE_KEY, selected);
+                return selected;
             }
-
-            return backupPath;
+            return null;
         } catch (error) {
-            console.error('Failed to create backup directory:', error);
+            console.error('Failed to select folder:', error);
             throw error;
         }
     }
 
     /**
-     * Create a backup file
+     * Create a backup file in the configured path
      */
     async createBackup(data: Omit<BackupData, 'version' | 'timestamp'>): Promise<string> {
-        await this.ensureBackupDir();
+        if (!isTauri) throw new Error('Desktop only');
+
+        let backupPath = this.getStoredPath();
+
+        // If no path configured, try to select one
+        if (!backupPath) {
+            backupPath = await this.selectBackupFolder();
+            if (!backupPath) throw new Error('No backup folder selected');
+        }
 
         const backup: BackupData = {
             version: '1.0',
@@ -56,40 +69,41 @@ export class LocalBackupService {
         };
 
         const filename = `backup_${new Date().toISOString().split('T')[0]}_${Date.now()}.json`;
-        const content = JSON.stringify(backup, null, 2);
+        const fullPath = `${backupPath}/${filename}`.replace(/\\/g, '/'); // Normalize path
 
         try {
-            await writeTextFile(`${BACKUP_DIR}/${filename}`, content, {
-                baseDir: BaseDirectory.Document
-            });
-
-            console.log('Backup created:', filename);
+            // Write using absolute path (requires configured fs capabilities)
+            await writeTextFile(fullPath, JSON.stringify(backup, null, 2));
+            console.log('Backup created:', fullPath);
             return filename;
         } catch (error) {
             console.error('Failed to create backup:', error);
-            throw new Error(`Backup failed: ${error}`);
+            throw new Error(`Backup failed: ${error}. Ensure the folder is writable.`);
         }
     }
 
     /**
-     * List all backup files
+     * List all backup files in the configured path
+     * Returns top 3 most recent backups
      */
     async listBackups(): Promise<Array<{ name: string; path: string; date: Date }>> {
         if (!isTauri) return [];
 
-        try {
-            await this.ensureBackupDir();
+        const backupPath = this.getStoredPath();
+        if (!backupPath) return [];
 
-            const entries = await readDir(BACKUP_DIR, { baseDir: BaseDirectory.Document });
+        try {
+            const entries = await readDir(backupPath);
 
             return entries
-                .filter(entry => entry.name?.endsWith('.json'))
+                .filter(entry => entry.name?.endsWith('.json') && entry.name.includes('backup_'))
                 .map(entry => ({
                     name: entry.name!,
-                    path: `${BACKUP_DIR}/${entry.name}`,
-                    date: new Date(entry.name!.match(/\d{4}-\d{2}-\d{2}/)?.[0] || '')
+                    path: `${backupPath}/${entry.name}`,
+                    date: new Date(entry.name!.match(/\d{4}-\d{2}-\d{2}/)?.[0] || new Date().toISOString())
                 }))
-                .sort((a, b) => b.date.getTime() - a.date.getTime());
+                .sort((a, b) => b.date.getTime() - a.date.getTime())
+                .slice(0, 3); // Return only top 3
         } catch (error) {
             console.error('Failed to list backups:', error);
             return [];
@@ -97,14 +111,11 @@ export class LocalBackupService {
     }
 
     /**
-     * Restore from a backup file
+     * Restore from a backup file (full path)
      */
-    async restoreBackup(filename: string): Promise<BackupData> {
+    async restoreBackup(fullPath: string): Promise<BackupData> {
         try {
-            const content = await readTextFile(`${BACKUP_DIR}/${filename}`, {
-                baseDir: BaseDirectory.Document
-            });
-
+            const content = await readTextFile(fullPath);
             const backup: BackupData = JSON.parse(content);
             return backup;
         } catch (error) {
@@ -118,29 +129,20 @@ export class LocalBackupService {
      */
     async openBackupFolder(): Promise<void> {
         if (!isTauri) {
-            alert('This feature only works in the desktop app');
+            alert('Desktop only');
             return;
         }
 
+        const backupPath = this.getStoredPath();
+        if (!backupPath) {
+            throw new Error('No backup folder configured');
+        }
+
         try {
-            const backupPath = await this.ensureBackupDir();
-            await open(backupPath);
+            await openShell(backupPath);
         } catch (error) {
             console.error('Failed to open backup folder:', error);
-            alert(`Failed to open folder: ${error}`);
-        }
-    }
-
-    /**
-     * Get backup folder path for display
-     */
-    async getBackupPath(): Promise<string> {
-        if (!isTauri) return 'N/A (Desktop only)';
-
-        try {
-            return await this.ensureBackupDir();
-        } catch {
-            return 'Error getting path';
+            throw error;
         }
     }
 }

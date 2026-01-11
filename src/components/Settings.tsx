@@ -28,21 +28,54 @@ export const Settings = () => {
 
     // Simple Backup State
     const [backupPath, setBackupPath] = useState<string>('');
-    const [lastSimpleBackup, setLastSimpleBackup] = useState<string>('Never');
+
     const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+    const [recentBackups, setRecentBackups] = useState<Array<{ name: string; path: string; date: Date }>>([]);
+    const [isRestoring, setIsRestoring] = useState(false);
+
+    const loadBackupInfo = async () => {
+        if (!!(window as any).__TAURI_INTERNALS__) {
+            const path = simpleBackupService.getStoredPath();
+            if (path) {
+                setBackupPath(path);
+                loadRecentBackups();
+            }
+        }
+    };
+
+    const loadRecentBackups = async () => {
+        try {
+            const backups = await simpleBackupService.listBackups();
+            setRecentBackups(backups);
+            if (backups.length > 0) {
+                // setLastSimpleBackup(backups[0].date.toLocaleString());
+            }
+        } catch (e) {
+            console.error('Failed to load recent backups', e);
+        }
+    };
 
     useEffect(() => {
         setIsTauri(!!(window as any).__TAURI_INTERNALS__);
-        // Load backup path if in Tauri
-        if (!!(window as any).__TAURI_INTERNALS__) {
-            simpleBackupService.getBackupPath().then(setBackupPath).catch(console.error);
-        }
+        loadBackupInfo();
     }, []);
 
     // Calculate backup size on component mount
 
 
     // Cleaned up unused Google Drive functions
+    const handleSelectFolder = async () => {
+        try {
+            const path = await simpleBackupService.selectBackupFolder();
+            if (path) {
+                setBackupPath(path);
+                await loadRecentBackups();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const handleCreateSimpleBackup = async () => {
         if (!isTauri) {
             alert('Local backups only work in the desktop app');
@@ -63,13 +96,36 @@ export const Settings = () => {
             };
 
             const filename = await simpleBackupService.createBackup(backupData);
-            setLastSimpleBackup(new Date().toLocaleString());
+            await loadRecentBackups();
             alert(`✅ Backup created successfully!\n\nFile: ${filename}`);
         } catch (error: any) {
             console.error('Backup error:', error);
-            alert(`❌ Backup failed: ${error.message || 'Unknown error'}`);
+            // If error suggests no folder, try selecting
+            if (error.message.includes('No backup folder selected')) {
+                await handleSelectFolder();
+            } else {
+                alert(`❌ Backup failed: ${error.message || 'Unknown error'}`);
+            }
         } finally {
             setIsCreatingBackup(false);
+        }
+    };
+
+    const handleRestoreSimpleBackup = async (fullPath: string) => {
+        if (!confirm('⚠️ Restore this backup?\n\nThis will OVERWRITE all current data. This action cannot be undone.')) return;
+
+        setIsRestoring(true);
+        try {
+            const data = await simpleBackupService.restoreBackup(fullPath);
+            await backupService.restoreBackup(data); // Using existing restore logic to process the data
+            await refreshData();
+            alert('✅ Restore successful! The app will now reload.');
+            window.location.reload();
+        } catch (error: any) {
+            console.error('Restore failed:', error);
+            alert(`❌ Restore failed: ${error.message}`);
+        } finally {
+            setIsRestoring(false);
         }
     };
 
@@ -218,11 +274,11 @@ export const Settings = () => {
 
                         <div className={styles.waContainer}>
                             {/* Simple Local Backup - Desktop Only */}
-                            {isTauri ? (
-                                <>
+                            {isTauri && (
+                                <div className={styles.waContainer}>
                                     <h3 style={{ marginBottom: '0.5rem' }}>📁 Local Backups</h3>
                                     <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                                        Your data is automatically saved to your Documents folder
+                                        Save your data to a local folder for safekeeping.
                                     </p>
 
                                     <div className={styles.waSection}>
@@ -235,16 +291,18 @@ export const Settings = () => {
                                             fontFamily: 'monospace',
                                             wordBreak: 'break-all',
                                             marginTop: '0.5rem',
-                                            userSelect: 'text',
-                                            cursor: 'text'
+                                            marginBottom: '0.5rem'
                                         }}>
-                                            {backupPath || 'Loading...'}
+                                            {backupPath || 'No folder selected'}
                                         </div>
-                                    </div>
-
-                                    <div className={styles.waSection} style={{ marginTop: '1rem' }}>
-                                        <div className={styles.waLabel}>Last Backup:</div>
-                                        <div className={styles.waValue}>{lastSimpleBackup}</div>
+                                        <Button
+                                            onClick={handleSelectFolder}
+                                            variant="secondary"
+                                            size="sm"
+                                            style={{ width: '100%' }}
+                                        >
+                                            {backupPath ? '📂 Change Folder' : '📂 Select Folder'}
+                                        </Button>
                                     </div>
 
                                     <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
@@ -265,9 +323,57 @@ export const Settings = () => {
                                         </Button>
                                     </div>
 
-                                    {/* Tip about Google Drive Desktop */}
+                                    {/* Recent Backups List */}
+                                    {recentBackups.length > 0 && (
+                                        <div style={{ marginTop: '2rem' }}>
+                                            <div className={styles.waLabel} style={{ marginBottom: '0.75rem' }}>Recent Backups:</div>
+                                            <div style={{
+                                                background: 'var(--bg-elevated)',
+                                                borderRadius: '8px',
+                                                overflow: 'hidden',
+                                                border: '1px solid var(--border-color)'
+                                            }}>
+                                                {recentBackups.map((backup, index) => (
+                                                    <div key={backup.name} style={{
+                                                        padding: '1rem',
+                                                        borderBottom: index < recentBackups.length - 1 ? '1px solid var(--border-color)' : 'none',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}>
+                                                        <div style={{ overflow: 'hidden' }}>
+                                                            <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>
+                                                                {backup.date.toLocaleString()}
+                                                            </div>
+                                                            <div style={{
+                                                                fontSize: '0.75rem',
+                                                                color: 'var(--text-secondary)',
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                maxWidth: '200px'
+                                                            }}>
+                                                                {backup.name}
+                                                            </div>
+                                                        </div>
+                                                        <Button
+                                                            variant="danger"
+                                                            size="sm"
+                                                            onClick={() => handleRestoreSimpleBackup(backup.path)}
+                                                            disabled={isRestoring}
+                                                            style={{ marginLeft: '1rem', fontSize: '0.8rem', padding: '0.25rem 0.5rem' }}
+                                                        >
+                                                            Restore ↺
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Tip about Google Drive Desktop - Moved to bottom */}
                                     <div style={{
-                                        marginTop: '1.5rem',
+                                        marginTop: '2rem',
                                         padding: '1rem',
                                         background: 'hsl(var(--color-primary-light))',
                                         borderRadius: '8px',
@@ -278,7 +384,7 @@ export const Settings = () => {
                                             💡 Tip: Automatic Cloud Backup
                                         </div>
                                         <div style={{ color: 'var(--text-secondary)' }}>
-                                            Install <strong>Google Drive for Desktop</strong> and sync the backup folder for automatic cloud backup!
+                                            Install <strong>Google Drive for Desktop</strong> and sync your backup folder for automatic cloud backup!
                                             <br />
                                             <a
                                                 href="https://www.google.com/drive/download/"
@@ -290,10 +396,6 @@ export const Settings = () => {
                                             </a>
                                         </div>
                                     </div>
-                                </>
-                            ) : (
-                                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                    Local backups are available in the desktop app.
                                 </div>
                             )}
                         </div>
