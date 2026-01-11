@@ -49,12 +49,18 @@ export const Settings = () => {
     const [isLocalBackingUp, setIsLocalBackingUp] = useState(false);
     const [isTauri, setIsTauri] = useState(false);
 
-    // Desktop OAuth State
-    const [desktopUserCode, setDesktopUserCode] = useState<string>('');
-    const [isAuthorizing, setIsAuthorizing] = useState(false);
+    // Simple Backup State
+    const [backupPath, setBackupPath] = useState<string>('');
+    const [lastSimpleBackup, setLastSimpleBackup] = useState<string>('Never');
+    const [isCreatingBackup, setIsCreatingBackup] = useState(false);
 
     useEffect(() => {
         setIsTauri(!!(window as any).__TAURI_INTERNALS__);
+
+        // Load backup path
+        if (!!(window as any).__TAURI_INTERNALS__) {
+            simpleBackupService.getBackupPath().then(setBackupPath).catch(console.error);
+        }
     }, []);
 
     useEffect(() => {
@@ -114,6 +120,50 @@ export const Settings = () => {
             calculateUnbackedCount();
         }
     }, [transactions, driveConnected]);
+
+    const handleCreateSimpleBackup = async () => {
+        if (!isTauri) {
+            alert('Local backups only work in the desktop app');
+            return;
+        }
+
+        setIsCreatingBackup(true);
+        try {
+            const backupData = {
+                transactions,
+                categories,
+                people,
+                settings: {
+                    currency: localStorage.getItem('ledger_currency'),
+                    userName: localStorage.getItem('ledger_user_name'),
+                    language
+                }
+            };
+
+            const filename = await simpleBackupService.createBackup(backupData);
+            setLastSimpleBackup(new Date().toLocaleString());
+            alert(`✅ Backup created successfully!\n\nFile: ${filename}`);
+        } catch (error: any) {
+            console.error('Backup error:', error);
+            alert(`❌ Backup failed: ${error.message || 'Unknown error'}`);
+        } finally {
+            setIsCreatingBackup(false);
+        }
+    };
+
+    const handleOpenBackupFolder = async () => {
+        if (!isTauri) {
+            alert('This feature only works in the desktop app');
+            return;
+        }
+
+        try {
+            await simpleBackupService.openBackupFolder();
+        } catch (error: any) {
+            console.error('Failed to open folder:', error);
+            alert(`❌ Failed to open folder: ${error.message || 'Unknown error'}`);
+        }
+    };
 
     const handleDriveConnect = async () => {
         if (!GOOGLE_CLIENT_ID) {
