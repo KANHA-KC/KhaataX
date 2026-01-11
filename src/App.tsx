@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { LedgerProvider } from './context/LedgerContext';
 import { LanguageProvider } from './context/LanguageContext';
-import { licenseService } from './services/license';
+
 import {
   Onboarding,
   Dashboard,
@@ -19,16 +19,14 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLocked, setIsLocked] = useState(true);
 
-  const [isTauri, setIsTauri] = useState(false);
+
 
   // Simple router state
   const [currentView, setCurrentView] = useState<'dashboard' | 'transactions' | 'people' | 'settings' | 'stocks'>('dashboard');
 
   useEffect(() => {
     const initApp = async () => {
-      // Check if running in Tauri
-      const inTauri = licenseService.isTauriEnvironment();
-      setIsTauri(inTauri);
+
 
 
 
