@@ -15,6 +15,7 @@ import { localBackupService } from '../services/localBackup';
 import { useTranslation } from '../context/LanguageContext';
 import { GOOGLE_CLIENT_ID } from '../config';
 import { googleDriveDesktopService } from '../services/googleDriveDesktop';
+import { localBackupService as simpleBackupService } from '../services/simpleBackup';
 
 export const Settings = () => {
     const { t, language, setLanguage } = useTranslation();
