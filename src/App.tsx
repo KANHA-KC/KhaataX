@@ -11,14 +11,14 @@ import {
   Settings,
   Layout,
   LockScreen,
-  ActivationScreen
+
 } from './components';
 
 function AppContent() {
   const [hasProfile, setHasProfile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isLocked, setIsLocked] = useState(true);
-  const [isActivated, setIsActivated] = useState(true);
+
   const [isTauri, setIsTauri] = useState(false);
 
   // Simple router state
@@ -30,11 +30,7 @@ function AppContent() {
       const inTauri = licenseService.isTauriEnvironment();
       setIsTauri(inTauri);
 
-      // Check license (only in Tauri)
-      if (inTauri) {
-        const licensed = await licenseService.isLicensed();
-        setIsActivated(licensed);
-      }
+
 
       // Check profile
       const user = localStorage.getItem('ledger_user_name');
@@ -73,10 +69,7 @@ function AppContent() {
 
   if (isLoading) return null;
 
-  // Activation check (Tauri only)
-  if (isTauri && !isActivated) {
-    return <ActivationScreen onActivated={() => setIsActivated(true)} />;
-  }
+
 
   if (isLocked) {
     return <LockScreen onUnlock={() => setIsLocked(false)} />;
