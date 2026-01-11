@@ -5,16 +5,12 @@ import { seedData } from '../utils/seeder';
 import styles from './Settings.module.css';
 import { Input } from './ui/Input';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, FileJson, FileText, Table, Upload, Cloud, X, Languages } from 'lucide-react';
+import { Plus, FileJson, FileText, Table, Upload, X, Languages } from 'lucide-react';
 import { exportToCSV, exportToPDF } from '../utils/export';
-import { googleDriveService } from '../services/googleDrive';
+
 import { backupService } from '../services/backup';
-import { autoBackupService, type AutoBackupFrequency } from '../services/autoBackup';
 import { dbService } from '../services/db';
-import { localBackupService } from '../services/localBackup';
 import { useTranslation } from '../context/LanguageContext';
-import { GOOGLE_CLIENT_ID } from '../config';
-import { googleDriveDesktopService } from '../services/googleDriveDesktop';
 import { localBackupService as simpleBackupService } from '../services/simpleBackup';
 
 export const Settings = () => {
@@ -23,30 +19,11 @@ export const Settings = () => {
     const [isSeeding, setIsSeeding] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Google Drive State
-    const [driveConnected, setDriveConnected] = useState(false);
-    // Client ID is now loaded from config, not state/local storage
-    const [isSyncing, setIsSyncing] = useState(false);
-    const [lastSyncTime, setLastSyncTime] = useState<string>(localStorage.getItem('last_sync_time') || 'Never');
-    const [backupSize, setBackupSize] = useState<string>('Unknown');
-    const [backupFrequency, setBackupFrequency] = useState<AutoBackupFrequency>(autoBackupService.getFrequency());
-    const [accountEmail, setAccountEmail] = useState<string | null>(null);
-
     // Category Management State
     const [newCatName, setNewCatName] = useState('');
     const [newCatType, setNewCatType] = useState<'income' | 'expense'>('expense');
     const [isAddingCat, setIsAddingCat] = useState(false);
 
-    // Backup List State
-    const [backupFiles, setBackupFiles] = useState<any[]>([]);
-    const [isLoadingBackups, setIsLoadingBackups] = useState(false);
-    const [isRestoring, setIsRestoring] = useState(false);
-    const [unbackedCount, setUnbackedCount] = useState(0);
-
-    // Local Backup State
-    const [lastLocalBackup, setLastLocalBackup] = useState(localStorage.getItem('last_local_backup_time') || 'Never');
-    const [lastLocalPath, setLastLocalPath] = useState(localStorage.getItem('last_local_backup_path') || '');
-    const [isLocalBackingUp, setIsLocalBackingUp] = useState(false);
     const [isTauri, setIsTauri] = useState(false);
 
     // Simple Backup State
@@ -56,71 +33,16 @@ export const Settings = () => {
 
     useEffect(() => {
         setIsTauri(!!(window as any).__TAURI_INTERNALS__);
-
-        // Load backup path
+        // Load backup path if in Tauri
         if (!!(window as any).__TAURI_INTERNALS__) {
             simpleBackupService.getBackupPath().then(setBackupPath).catch(console.error);
         }
     }, []);
 
-    useEffect(() => {
-        const initDrive = async () => {
-            if (googleDriveService.restoreSession()) {
-                setAccountEmail('Connected Account');
-                setDriveConnected(true);
-                loadBackupFiles();
-            }
+    // Calculate backup size on component mount
 
-            if (GOOGLE_CLIENT_ID) {
-                try {
-                    await googleDriveService.initClient({ clientId: GOOGLE_CLIENT_ID });
-                } catch (error) {
-                    console.error('Drive init failed:', error);
-                }
-            }
 
-            try {
-                const data = await backupService.createBackupData();
-                const blob = backupService.createBackupBlob(data);
-                const sizeMB = blob.size / (1024 * 1024);
-                setBackupSize(sizeMB < 0.1 ? '~100 KB' : `${sizeMB.toFixed(1)} MB`);
-            } catch (e) {
-                console.error('Size calc failed', e);
-            }
-        };
-        initDrive();
-    }, []);
-
-    const loadBackupFiles = async () => {
-        setIsLoadingBackups(true);
-        try {
-            const files = await googleDriveService.listBackupFiles();
-            setBackupFiles(files);
-        } catch (error) {
-            console.error('Failed to load backups:', error);
-        } finally {
-            setIsLoadingBackups(false);
-        }
-    };
-
-    const calculateUnbackedCount = () => {
-        const lastBackupTime = localStorage.getItem('last_sync_time');
-        if (!lastBackupTime) {
-            setUnbackedCount(transactions.length);
-            return;
-        }
-
-        const lastBackupDate = new Date(lastBackupTime);
-        const unbacked = transactions.filter(t => new Date(t.date) > lastBackupDate);
-        setUnbackedCount(unbacked.length);
-    };
-
-    useEffect(() => {
-        if (driveConnected) {
-            calculateUnbackedCount();
-        }
-    }, [transactions, driveConnected]);
-
+    // Cleaned up unused Google Drive functions
     const handleCreateSimpleBackup = async () => {
         if (!isTauri) {
             alert('Local backups only work in the desktop app');
@@ -165,143 +87,7 @@ export const Settings = () => {
         }
     };
 
-    const handleDriveConnect = async () => {
-        if (!GOOGLE_CLIENT_ID) {
-            alert('Configuration Error: Google Client ID is missing. Please check .env file.');
-            return;
-        }
-        if (isTauri) {
-            // Desktop: Use device code flow
-            setIsAuthorizing(true);
-            try {
-                const { userCode } = await googleDriveDesktopService.authorize();
-                setDesktopUserCode(userCode);
 
-                // Poll for completion
-                const checkAuth = setInterval(() => {
-                    if (googleDriveDesktopService.isAuthenticated()) {
-                        clearInterval(checkAuth);
-                        setIsAuthorizing(false);
-                        setDesktopUserCode('');
-                        setDriveConnected(true);
-                        setAccountEmail('Connected Account');
-                        localStorage.setItem('drive_connected_status', 'true');
-                        alert('✅ Google Drive connected successfully!');
-                    }
-                }, 2000);
-                // Timeout after 5 minutes
-                setTimeout(() => {
-                    clearInterval(checkAuth);
-                    if (!googleDriveDesktopService.isAuthenticated()) {
-                        setIsAuthorizing(false);
-                        setDesktopUserCode('');
-                        alert('❌ Authorization timeout. Please try again.');
-                    }
-                }, 300000);
-            } catch (error: any) {
-                console.error('Desktop auth error:', error);
-                setIsAuthorizing(false);
-                setDesktopUserCode('');
-                alert(`❌ Connection failed: ${error.message}`);
-            }
-        } else {
-            // Web: Use existing popup flow
-            try {
-                await googleDriveService.initClient({ clientId: GOOGLE_CLIENT_ID });
-                const token = await googleDriveService.signIn();
-                if (token) {
-                    setAccountEmail('Connected Account');
-                    setDriveConnected(true);
-                    localStorage.setItem('drive_connected_status', 'true');
-                }
-            } catch (error: any) {
-                console.error('Drive connection error:', error);
-                alert(`Connection failed: ${error.message || JSON.stringify(error)}`);
-            }
-        }
-    };
-
-    const handleDriveDisconnect = async () => {
-        await googleDriveService.signOut();
-        setDriveConnected(false);
-        setAccountEmail(null);
-        localStorage.removeItem('drive_connected_status');
-    };
-
-    const [lastBackupLink, setLastBackupLink] = useState<string | null>(localStorage.getItem('last_backup_link'));
-
-    const handleSync = async () => {
-        setIsSyncing(true);
-        try {
-            const data = await backupService.createBackupData();
-            const blob = backupService.createBackupBlob(data);
-            const filename = `khaatax-backup-${new Date().toISOString().split('T')[0]}.json`;
-
-            const file = await googleDriveService.uploadFile(blob, filename);
-
-            const now = new Date().toLocaleString();
-            setLastSyncTime(now);
-            localStorage.setItem('last_sync_time', now);
-            localStorage.setItem('last_backup_timestamp', Date.now().toString());
-
-            if (file.webViewLink) {
-                setLastBackupLink(file.webViewLink);
-                localStorage.setItem('last_backup_link', file.webViewLink);
-            }
-
-            alert('Backup successful!');
-            setDriveConnected(true);
-            setAccountEmail('Connected Account');
-            await loadBackupFiles();
-        } catch (error: any) {
-            console.error('Sync error:', error);
-            alert(`Sync failed: ${error.message}`);
-        } finally {
-            setIsSyncing(false);
-        }
-    };
-
-    const handleLocalBackup = async () => {
-        setIsLocalBackingUp(true);
-        try {
-            const path = await localBackupService.performLocalBackup();
-            if (path) {
-                setLastLocalBackup(new Date().toLocaleString());
-                setLastLocalPath(path);
-                alert(`Backup saved successfully to Documents folder!`);
-            } else {
-                alert('Local backup failed. Are you running the desktop version?');
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Local backup failed.');
-        } finally {
-            setIsLocalBackingUp(false);
-        }
-    };
-
-    const handleRestoreBackup = async (fileId: string, fileName: string) => {
-        if (!confirm(`Restore from backup "${fileName}"? This will overwrite your current data.`)) return;
-        setIsRestoring(true);
-        try {
-            const data = await googleDriveService.downloadFile(fileId);
-            await backupService.restoreBackup(data);
-            await refreshData();
-            alert('Backup restored successfully!');
-            window.location.reload();
-        } catch (error: any) {
-            console.error('Restore error:', error);
-            alert(`Restore failed: ${error.message}`);
-        } finally {
-            setIsRestoring(false);
-        }
-    };
-
-    const handleFrequencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const val = e.target.value as AutoBackupFrequency;
-        setBackupFrequency(val);
-        autoBackupService.setFrequency(val);
-    };
 
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -428,185 +214,86 @@ export const Settings = () => {
                         <h3>{t('backup_sync')}</h3>
                         <p className={styles.hint}>Secure your data with cloud and local backups.</p>
 
-                        {isTauri && (
-                            <div className={styles.localBackupSection}>
-                                <div className={styles.waSection}>
-                                    <div className={styles.waLabel}>Local Machine Backup:</div>
-                                    <div className={styles.waValue}>{lastLocalBackup}</div>
-                                </div>
-                                {lastLocalPath && (
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', wordBreak: 'break-all' }}>
-                                        Path: {lastLocalPath}
-                                    </div>
-                                )}
-                                <button className={styles.waButton} style={{ backgroundColor: 'var(--color-primary)', marginBottom: '1.5rem' }} onClick={handleLocalBackup} disabled={isLocalBackingUp}>
-                                    {isLocalBackingUp ? 'Saving...' : 'Backup to Documents'}
-                                </button>
-                                <hr style={{ border: 0, borderTop: '1px solid var(--border-color)', marginBottom: '1.5rem' }} />
-                            </div>
-                        )}
+
 
                         <div className={styles.waContainer}>
-                            {/* Unbacked Entries Warning */}
-                            {driveConnected && unbackedCount > 0 && (
-                                <div style={{
-                                    padding: '0.75rem',
-                                    background: 'hsl(38, 92%, 50%, 0.1)',
-                                    border: '1px solid hsl(38, 92%, 50%)',
-                                    borderRadius: '6px',
-                                    marginBottom: '1rem',
-                                    fontSize: '0.9rem',
-                                    color: 'hsl(38, 92%, 35%)'
-                                }}>
-                                    ⚠️ You have <strong>{unbackedCount}</strong> {unbackedCount === 1 ? 'entry' : 'entries'} that haven't been backed up yet.
-                                </div>
-                            )}
+                            {/* Simple Local Backup - Desktop Only */}
+                            {isTauri ? (
+                                <>
+                                    <h3 style={{ marginBottom: '0.5rem' }}>📁 Local Backups</h3>
+                                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                                        Your data is automatically saved to your Documents folder
+                                    </p>
 
-                            <div className={styles.waSection}>
-                                <div className={styles.waLabel}>Last Backup:</div>
-                                <div className={styles.waValue}>
-                                    {lastSyncTime}
-                                    {lastBackupLink && (
-                                        <a href={lastBackupLink} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', marginLeft: '0.5rem', color: '#25D366', textDecoration: 'none' }}>
-                                            (View file)
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                            <hr style={{ border: 0, borderTop: '1px solid var(--border-color)' }} />
-                            <div className={styles.waSection}>
-                                <div className={styles.waLabel}>Size:</div>
-                                <div className={styles.waValue}>{backupSize}</div>
-                            </div>
-
-                            <button className={styles.waButton} onClick={handleSync} disabled={isSyncing || !driveConnected}>
-                                {isSyncing ? 'Backing up...' : 'Back up'}
-                            </button>
-
-                            <div className={styles.waAccountRow}>
-                                <Cloud className={styles.waIcon} />
-                                <div style={{ flex: 1 }}>
-                                    <div className={styles.waLabel}>Google Account</div>
-                                    <div className={styles.waValue}>{driveConnected ? (accountEmail || 'Connected') : 'Not connected'}</div>
-                                </div>
-                                {driveConnected && (
-                                    <button className={styles.waDisconnectBtn} onClick={handleDriveDisconnect}>
-                                        <X size={16} />
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className={styles.waSection}>
-                                <div className={styles.waLabel} style={{ marginBottom: '0.5rem' }}>Automatic backups</div>
-                                <select
-                                    className={styles.freqSelect}
-                                    value={backupFrequency}
-                                    onChange={handleFrequencyChange}
-                                    disabled={!driveConnected}
-                                >
-                                    <option value="off">Off</option>
-                                    <option value="daily">Daily</option>
-                                    <option value="weekly">Weekly</option>
-                                    <option value="monthly">Monthly</option>
-                                </select>
-                            </div>
-
-                            {/* Backup History */}
-                            {driveConnected && (
-                                <div style={{ marginTop: '1rem' }}>
-                                    <div className={styles.waLabel} style={{ marginBottom: '0.75rem' }}>
-                                        Available Backups {isLoadingBackups && '(Loading...)'}
-                                    </div>
-                                    {backupFiles.length === 0 && !isLoadingBackups && (
-                                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                                            No backups found. Click "Back up" to create one.
-                                        </p>
-                                    )}
-                                    {backupFiles.map((file, idx) => (
-                                        <div key={file.id} style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            padding: '0.75rem',
-                                            background: 'var(--bg-elevated)',
-                                            borderRadius: '6px',
-                                            marginBottom: '0.5rem'
-                                        }}>
-                                            <div>
-                                                <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>
-                                                    Backup {idx + 1}
-                                                </div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                    {new Date(file.createdTime).toLocaleString()}
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => handleRestoreBackup(file.id, file.name)}
-                                                disabled={isRestoring}
-                                                style={{
-                                                    padding: '0.4rem 0.8rem',
-                                                    background: 'var(--accent)',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    fontSize: '0.85rem',
-                                                    cursor: isRestoring ? 'not-allowed' : 'pointer',
-                                                    opacity: isRestoring ? 0.6 : 1
-                                                }}
-                                            >
-                                                {isRestoring ? 'Restoring...' : 'Restore'}
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Config Section for Client ID - Removed Custom Input */}
-                            {!driveConnected && (
-                                <div style={{ marginTop: '1rem' }}>
-                                    {isTauri && isAuthorizing && desktopUserCode && (
+                                    <div className={styles.waSection}>
+                                        <div className={styles.waLabel}>Backup Location:</div>
                                         <div style={{
-                                            padding: '1rem',
+                                            padding: '0.5rem',
                                             background: 'var(--bg-elevated)',
-                                            borderRadius: '8px',
-                                            marginBottom: '1rem',
-                                            border: '2px solid var(--accent)'
+                                            borderRadius: '4px',
+                                            fontSize: '0.85rem',
+                                            fontFamily: 'monospace',
+                                            wordBreak: 'break-all',
+                                            marginTop: '0.5rem',
+                                            userSelect: 'text',
+                                            cursor: 'text'
                                         }}>
-                                            <div style={{ marginBottom: '0.5rem', fontWeight: 600 }}>
-                                                Authorization in Progress
-                                            </div>
-                                            <div style={{ fontSize: '0.9rem', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
-                                                1. Browser should have opened automatically<br />
-                                                2. Sign in to your Google account<br />
-                                                3. Enter this code when prompted:
-                                            </div>
-                                            <div style={{
-                                                padding: '1rem',
-                                                background: 'var(--bg-app)',
-                                                borderRadius: '6px',
-                                                textAlign: 'center',
-                                                fontFamily: 'monospace',
-                                                fontSize: '1.5rem',
-                                                fontWeight: 'bold',
-                                                letterSpacing: '0.2em',
-                                                color: 'var(--accent)'
-                                            }}>
-                                                {desktopUserCode}
-                                            </div>
-                                            <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                                                Waiting for authorization...
-                                            </div>
+                                            {backupPath || 'Loading...'}
                                         </div>
-                                    )}
+                                    </div>
 
-                                    <Button
-                                        style={{ width: '100%' }}
-                                        onClick={handleDriveConnect}
-                                        disabled={isAuthorizing}
-                                    >
-                                        <Cloud size={16} style={{ marginRight: '8px' }} />
-                                        {isAuthorizing ? 'Authorizing...' : 'Connect Google Drive'}
-                                    </Button>
+                                    <div className={styles.waSection} style={{ marginTop: '1rem' }}>
+                                        <div className={styles.waLabel}>Last Backup:</div>
+                                        <div className={styles.waValue}>{lastSimpleBackup}</div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+                                        <Button
+                                            onClick={handleCreateSimpleBackup}
+                                            disabled={isCreatingBackup}
+                                            style={{ flex: 1 }}
+                                        >
+                                            {isCreatingBackup ? 'Creating...' : '💾 Create Backup Now'}
+                                        </Button>
+
+                                        <Button
+                                            onClick={handleOpenBackupFolder}
+                                            variant="secondary"
+                                            style={{ flex: 1 }}
+                                        >
+                                            📂 Open Folder
+                                        </Button>
+                                    </div>
+
+                                    {/* Tip about Google Drive Desktop */}
+                                    <div style={{
+                                        marginTop: '1.5rem',
+                                        padding: '1rem',
+                                        background: 'hsl(var(--color-primary-light))',
+                                        borderRadius: '8px',
+                                        border: '1px solid hsl(var(--color-primary))',
+                                        fontSize: '0.9rem'
+                                    }}>
+                                        <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                                            💡 Tip: Automatic Cloud Backup
+                                        </div>
+                                        <div style={{ color: 'var(--text-secondary)' }}>
+                                            Install <strong>Google Drive for Desktop</strong> and sync the backup folder for automatic cloud backup!
+                                            <br />
+                                            <a
+                                                href="https://www.google.com/drive/download/"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ color: 'hsl(var(--color-primary))', marginTop: '0.5rem', display: 'inline-block' }}
+                                            >
+                                                Download Google Drive →
+                                            </a>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                    Local backups are available in the desktop app.
                                 </div>
                             )}
                         </div>
