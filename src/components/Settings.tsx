@@ -13,6 +13,7 @@ import { autoBackupService, type AutoBackupFrequency } from '../services/autoBac
 import { dbService } from '../services/db';
 import { localBackupService } from '../services/localBackup';
 import { useTranslation } from '../context/LanguageContext';
+import { GOOGLE_CLIENT_ID } from '../config';
 
 export const Settings = () => {
     const { t, language, setLanguage } = useTranslation();
@@ -22,7 +23,7 @@ export const Settings = () => {
 
     // Google Drive State
     const [driveConnected, setDriveConnected] = useState(false);
-    const [clientId, setClientId] = useState(localStorage.getItem('google_client_id') || '');
+    // Client ID is now loaded from config, not state/local storage
     const [isSyncing, setIsSyncing] = useState(false);
     const [lastSyncTime, setLastSyncTime] = useState<string>(localStorage.getItem('last_sync_time') || 'Never');
     const [backupSize, setBackupSize] = useState<string>('Unknown');
@@ -58,9 +59,9 @@ export const Settings = () => {
                 loadBackupFiles();
             }
 
-            if (clientId) {
+            if (GOOGLE_CLIENT_ID) {
                 try {
-                    await googleDriveService.initClient({ clientId });
+                    await googleDriveService.initClient({ clientId: GOOGLE_CLIENT_ID });
                 } catch (error) {
                     console.error('Drive init failed:', error);
                 }
@@ -76,7 +77,7 @@ export const Settings = () => {
             }
         };
         initDrive();
-    }, [clientId]);
+    }, []);
 
     const loadBackupFiles = async () => {
         setIsLoadingBackups(true);
@@ -109,16 +110,17 @@ export const Settings = () => {
     }, [transactions, driveConnected]);
 
     const handleDriveConnect = async () => {
-        if (!clientId) {
-            alert('Please enter a valid Google Client ID first.');
+        if (!GOOGLE_CLIENT_ID) {
+            alert('Configuration Error: Google Client ID is missing. Please check .env file.');
             return;
         }
 
         try {
-            await googleDriveService.initClient({ clientId });
+            await googleDriveService.initClient({ clientId: GOOGLE_CLIENT_ID });
             const token = await googleDriveService.signIn();
             if (token) {
-                localStorage.setItem('google_client_id', clientId);
+                // No need to store client_id in local storage anymore, but we keep drive status
+                setAccountEmail('Connected Account');
                 setAccountEmail('Connected Account');
                 setDriveConnected(true);
                 localStorage.setItem('drive_connected_status', 'true');
@@ -469,17 +471,13 @@ export const Settings = () => {
                                 </div>
                             )}
 
-                            {/* Config Section for Client ID */}
+                            {/* Config Section for Client ID - Removed Custom Input */}
                             {!driveConnected && (
-                                <div style={{ marginTop: '1rem', background: 'hsl(var(--bg-app))', padding: '1rem', borderRadius: '8px' }}>
-                                    <div className={styles.waLabel} style={{ marginBottom: '0.5rem' }}>Configuration</div>
-                                    <Input
-                                        placeholder="Enter Google Client ID"
-                                        value={clientId}
-                                        onChange={e => setClientId(e.target.value)}
-                                        style={{ marginBottom: '0.5rem' }}
-                                    />
-                                    <Button size="sm" onClick={handleDriveConnect}>Connect Account</Button>
+                                <div style={{ marginTop: '1rem' }}>
+                                    <Button style={{ width: '100%' }} onClick={handleDriveConnect}>
+                                        <Cloud size={16} style={{ marginRight: '8px' }} />
+                                        Connect Google Drive
+                                    </Button>
                                 </div>
                             )}
                         </div>
